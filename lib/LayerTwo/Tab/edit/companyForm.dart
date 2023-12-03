@@ -1,19 +1,43 @@
 import 'package:flutter/services.dart';
-import 'package:student/LayerTwo/placements.dart';
-
+import 'package:intl/intl.dart';
 import 'zone_list.dart';
 import 'package:flutter/material.dart';
 //import 'package:url_launcher/url_launcher.dart';
 
 class CompanyForm extends StatefulWidget {
-  const CompanyForm({Key? key}) : super(key: key);
+  const CompanyForm(
+      {Key? key,
+      this.initialCompany,
+      this.initialIndustry,
+      this.initialSector,
+      this.initialZone,
+      this.initialAllowance,
+      this.initialStatus,
+      this.initialAddress,
+      this.initialPostcode,
+      this.initialDuration,
+      this.initialStart,
+      this.initialEnd})
+      : super(key: key);
+
+  final String? initialCompany,
+      initialIndustry,
+      initialSector,
+      initialZone,
+      initialAllowance,
+      initialStatus,
+      initialAddress,
+      initialPostcode,
+      initialDuration,
+      initialStart,
+      initialEnd;
 
   @override
   _CompanyFormState createState() => _CompanyFormState();
 }
 
 const List<String> zone = <String>[
-  'zone',
+  'Zone',
   'A',
   'B',
   'C',
@@ -28,7 +52,7 @@ const List<String> zone = <String>[
   'L'
 ];
 const List<String> sector = <String>[
-  'sector',
+  'Sector',
   'Irrelevant',
   'Not Stated',
   'Agriculture, Forestry, and Fishing',
@@ -53,8 +77,8 @@ const List<String> sector = <String>[
   'Private Households with Employeed Personel',
   'Territorial Organization and Bodies'
 ];
-const List<String> industry = <String>[
-  'industry',
+List<String> industry = <String>[
+  'Industry',
   'Irrelevant',
   'Not Stated',
   'Government',
@@ -80,15 +104,55 @@ final List<String> zones = [
   'Zone K',
   'Zone L'
 ];
-
-String dropdownValue = '';
-TextEditingController company = TextEditingController();
-TextEditingController address = TextEditingController();
-TextEditingController postcode = TextEditingController();
-TextEditingController monthlyA = TextEditingController();
+String dropDownValueZone = 'Zone';
+String dropDownValueSector = 'Sector';
+String dropDownValueIndustry = 'Industry';
 
 class _CompanyFormState extends State<CompanyForm> {
   final _formKey = GlobalKey<FormState>();
+  TextEditingController company = TextEditingController();
+  TextEditingController address = TextEditingController();
+  TextEditingController postcode = TextEditingController();
+  TextEditingController monthlyA = TextEditingController();
+  TextEditingController duration = TextEditingController();
+  TextEditingController start = TextEditingController();
+  TextEditingController end = TextEditingController();
+  DateTime selectedDate = DateTime.now();
+
+  DateTime? startDate;
+  DateTime? endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCompany != null) {
+      company.text = widget.initialCompany ?? '-';
+      dropDownValueIndustry = widget.initialIndustry!;
+      dropDownValueSector = widget.initialSector!;
+      dropDownValueZone = widget.initialZone!;
+      address.text = widget.initialAddress ?? '-';
+      postcode.text = widget.initialPostcode ?? '-';
+      monthlyA.text = widget.initialAllowance ?? '-';
+      start.text = widget.initialStart ?? '-';
+      end.text = widget.initialEnd ?? '-';
+      duration.text = widget.initialDuration ?? '-';
+    }
+  }
+
+  void goCompany() {
+    Navigator.pop(context, {
+      'company': company.text,
+      'industry': dropDownValueIndustry,
+      'sector': dropDownValueSector,
+      'zone': dropDownValueZone,
+      'address': address.text,
+      'postcode': postcode.text,
+      'monthlyA': monthlyA.text,
+      'start': start.text,
+      'end': end.text,
+      'duration': duration.text
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +204,7 @@ class _CompanyFormState extends State<CompanyForm> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
+                          alignment: Alignment.bottomCenter,
                             padding: const EdgeInsets.symmetric(vertical: 5),
                             child: Form(
                                 key: _formKey,
@@ -165,57 +230,162 @@ class _CompanyFormState extends State<CompanyForm> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                                  SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: <Widget>[
-                                          DropdownMenu<String>(
-                                            initialSelection: industry.first,
-                                            onSelected: (String? value) {
+                                  Container(
+                                    padding: const EdgeInsets.only(
+                                        left: 10, right: 10, bottom: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey[100],
+                                    ),
+                                    child: ExpansionTile(
+                                      title: const Text(
+                                          'Select Industry, Sector, and Zone',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                          )),
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(4),
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            underline:
+                                                Container(), // Remove underline
+                                            value: dropDownValueIndustry,
+                                            onChanged: (String? value) {
                                               setState(() {
-                                                dropdownValue = value!;
+                                                dropDownValueIndustry = value!;
                                               });
                                             },
-                                            dropdownMenuEntries: industry
-                                                .map<DropdownMenuEntry<String>>(
-                                                    (String value) {
-                                              return DropdownMenuEntry<String>(
-                                                  value: value, label: value);
-                                            }).toList(),
+                                            items: industry
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 5),
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(value),
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            iconSize: 24,
+                                            elevation: 16,
                                           ),
-                                          const SizedBox(width: 10),
-                                          DropdownMenu<String>(
-                                            initialSelection: sector.first,
-                                            onSelected: (String? value) {
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(4),
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            underline:
+                                                Container(), // Remove underline
+                                            value: dropDownValueSector,
+                                            onChanged: (String? value) {
                                               setState(() {
-                                                dropdownValue = value!;
+                                                dropDownValueSector = value!;
                                               });
                                             },
-                                            dropdownMenuEntries: sector
-                                                .map<DropdownMenuEntry<String>>(
-                                                    (String value) {
-                                              return DropdownMenuEntry<String>(
-                                                  value: value, label: value);
-                                            }).toList(),
+                                            items: sector
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 5),
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(value),
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            iconSize: 24,
+                                            elevation: 16,
                                           ),
-                                          const SizedBox(width: 10),
-                                          DropdownMenu<String>(
-                                            initialSelection: zone.first,
-                                            onSelected: (String? value) {
-                                              setState(() {
-                                                dropdownValue = value!;
-                                              });
-                                            },
-                                            dropdownMenuEntries: zone
-                                                .map<DropdownMenuEntry<String>>(
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              flex: 3,
+                                              child: Container(
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8),
+                                                padding:
+                                                    const EdgeInsets.all(4),
+                                                child: DropdownButton<String>(
+                                                  isExpanded: true,
+                                                  underline:
+                                                      Container(), // Remove underline
+                                                  value: dropDownValueZone,
+                                                  onChanged: (String? value) {
+                                                    setState(() {
+                                                      dropDownValueZone =
+                                                          value!;
+                                                    });
+                                                  },
+                                                  items: zone.map<
+                                                      DropdownMenuItem<String>>(
                                                     (String value) {
-                                              return DropdownMenuEntry<String>(
-                                                  value: value, label: value);
-                                            }).toList(),
-                                          ),
-                                        ],
-                                      )),
-                                       const SizedBox(height: 20),
+                                                      return DropdownMenuItem<
+                                                          String>(
+                                                        value: value,
+                                                        child: Container(
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 5),
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          child: Text(value),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ).toList(),
+                                                  icon: const Icon(Icons
+                                                      .keyboard_arrow_down),
+                                                  iconSize: 24,
+                                                  elevation: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Flexible(
+                                              flex: 0,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  _showZoneSelectionModal(
+                                                      context);
+                                                },
+                                                child: const Icon(
+                                                  Icons.info,
+                                                  size: 30,
+                                                  color: Color.fromRGBO(
+                                                      148, 112, 18, 1),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
@@ -269,109 +439,245 @@ class _CompanyFormState extends State<CompanyForm> {
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
                                       fillColor: Colors.grey[100],
                                       filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.monetization_on_rounded),
-                                      labelText: 'Monthly Allownance',
+                                      prefixIcon: const Icon(
+                                          Icons.monetization_on_rounded),
+                                      labelText: 'Monthly Allowance',
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                               Column(children: [
-                                  Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey[100],
+                                    ),
+                                    child: ExpansionTile(
+                                      title: const Text(
+                                          'Select Start Date and End Date',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                          )),
                                       children: [
-                                        ElevatedButton(
-                                            onPressed: () {
-                                              _showZoneSelectionModal(context);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.black87,
-                                                side: const BorderSide(
-                                                    color: Colors.white70),
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            25))),
-                                            child: const Text(
-                                              'Zone',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
-                                                  fontFamily: 'Futura'),
-                                            ))
-                                      ]),
-                                  const Divider(),
-                                  Text(
-                                    'Note',
-                                    style: TextStyle(
-                                        color: Colors.red[800],
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w800,
-                                        fontFamily: 'Futura'),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  const Divider(),
-                                  RichText(
-                                    text: const TextSpan(
-                                      style: TextStyle(
-                                        color: Colors.black87,
-                                        fontSize: 15,
-                                        fontStyle: FontStyle.italic,
-                                        fontFamily: 'Futura',
-                                      ),
-                                      children: <TextSpan>[
-                                        TextSpan(
-                                          text: 'Make sure ',
+                                        const SizedBox(height: 12),
+                                        TextFormField(
+                                          controller: start,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            fillColor: Colors.grey[100],
+                                            filled: true,
+                                            prefixIcon: const Icon(
+                                                Icons.calendar_today),
+                                            labelText: 'Start Date',
+                                          ),
+                                          onTap: () async {
+                                            DateTime? pickedDate =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime(2101),
+                                            );
+
+                                            if (pickedDate != null &&
+                                                pickedDate != startDate) {
+                                              setState(() {
+                                                startDate = pickedDate;
+                                                start.text =
+                                                    DateFormat('dd MMMM yyyy')
+                                                        .format(pickedDate);
+                                                calculateDuration();
+                                              });
+                                            }
+                                          },
                                         ),
-                                        TextSpan(
-                                            text: 'Monthly Allowance ',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            )),
-                                        TextSpan(
-                                          text:
-                                              '(Oversea Placement Convert to MYR), ',
+                                        const SizedBox(height: 20),
+                                        TextFormField(
+                                          controller: end,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            fillColor: Colors.grey[100],
+                                            filled: true,
+                                            prefixIcon: const Icon(
+                                                Icons.calendar_today),
+                                            labelText: 'End Date',
+                                          ),
+                                          onTap: () async {
+                                            DateTime? pickedDate =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate:
+                                                  startDate ?? DateTime.now(),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime(2101),
+                                            );
+
+                                            if (pickedDate != null &&
+                                                pickedDate != endDate) {
+                                              setState(() {
+                                                endDate = pickedDate;
+                                                end.text =
+                                                    DateFormat('dd MMMM yyyy')
+                                                        .format(pickedDate);
+                                                calculateDuration();
+                                              });
+                                            }
+                                          },
                                         ),
-                                        TextSpan(
-                                            text: 'Sector, Industry Sector, ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        TextSpan(text: 'and '),
-                                        TextSpan(
-                                            text: 'Zone ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        TextSpan(text: 'are correct.'),
+                                        const SizedBox(height: 20),
+                                        TextFormField(
+                                          controller: duration,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            fillColor: Colors.grey[100],
+                                            filled: true,
+                                            labelText: 'Duration (Months)',
+                                          ),
+                                          readOnly: true,
+                                        ),
                                       ],
                                     ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: Tooltip(
+                                          message:
+                                              'Note\nMake sure Monthly Allowance (Oversea Placement Convert to MYR), Sector, Industry Sector, and Zone are correct.',
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  showMoney(context);
+                                                },
+                                                child: const Icon(
+                                                  Icons.info,
+                                                  size: 30,
+                                                  color: Color.fromRGBO(
+                                                      148, 112, 18, 1),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    ],
                                   )
-                                ]),
-                              
                                 ]))),
                         const SizedBox(height: 25),
                         Container(
-                            alignment: Alignment.bottomRight,
-                            child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Expanded(
-                                      child: ElevatedButton(
-                                    onPressed: () {},
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color.fromRGBO(
-                                            148, 112, 18, 1),
-                                        minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save'),
-                                  ))
-                                ]))
+                            child: Row(children: [
+                          Expanded(
+                              child: ElevatedButton(
+                            onPressed: () {
+                              goCompany();
+                            },
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromRGBO(148, 112, 18, 1),
+                                minimumSize: const Size.fromHeight(50)),
+                            child: const Text('Save'),
+                          ))
+                        ]))
                       ]),
                 )))));
+  }
+
+  void showMoney(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Note',
+            style: TextStyle(
+              color: Colors.red[800],
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura',
+            ),
+          ),
+          content: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: 'Make sure ',
+                ),
+                TextSpan(
+                  text: 'Monthly Allowance ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(
+                  text: '(Oversea Placement Convert to MYR), ',
+                ),
+                TextSpan(
+                  text: 'Sector, Industry Sector, ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(text: 'and '),
+                TextSpan(
+                  text: 'Zone ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(text: 'are correct.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showZoneSelectionModal(BuildContext context) {
@@ -407,5 +713,34 @@ class _CompanyFormState extends State<CompanyForm> {
         );
       },
     );
+  }
+
+  void calculateDuration() {
+    if (startDate != null && endDate != null) {
+      Duration difference = endDate!.difference(startDate!);
+      int months = (difference.inDays / 30).floor();
+
+      if (months < 6) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text('Duration must be at least 6 months.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        duration.text = months.toString();
+      }
+    }
   }
 }
