@@ -4,7 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class FinalReportUpload extends StatefulWidget {
-  const FinalReportUpload({Key? key}) : super(key: key);
+  const FinalReportUpload({
+    Key? key,
+    this.initialTitle,
+    this.initialDrive,
+    this.initialDate,
+  }) : super(key: key);
+
+  final String? initialTitle;
+  final String? initialDrive;
+  final String? initialDate;
 
   @override
   _FinalReportUploadState createState() => _FinalReportUploadState();
@@ -20,8 +29,12 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
 
   @override
   void initState() {
-    dateinput.text = '';
     super.initState();
+    if (widget.initialTitle != null) {
+      title.text = widget.initialTitle ?? '-';
+      drive.text = widget.initialDrive ?? '-';
+      dateinput.text = widget.initialDate ?? '-';
+    }
   }
 
   Widget _File({
@@ -54,7 +67,7 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
     }
   }
 
-  void navigateBackWithData() {
+  void goUpload() {
     Navigator.pop(context, {
       'title': title.text,
       'drive': drive.text,
@@ -256,7 +269,7 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                         Expanded(
                                             child: ElevatedButton(
                                           onPressed: () {
-                                            navigateBackWithData();
+                                            goUpload();
                                           },
                                           style: ElevatedButton.styleFrom(
                                               backgroundColor:
@@ -265,7 +278,6 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                               minimumSize:
                                                   const Size.fromHeight(50)),
                                           child: const Text('Save'),
-                                          
                                         ))
                                       ])),
 
