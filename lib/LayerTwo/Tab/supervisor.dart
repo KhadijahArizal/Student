@@ -1,12 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:student/LayerTwo/placements.dart';
 import 'package:student/LayerTwo/Tab/edit/supervisorForm.dart';
 
-// ignore: must_be_immutable
-class Supervisor extends StatelessWidget {
- late String supervisor, email, contact;
+class Supervisor extends StatefulWidget {
+  const Supervisor({
+    Key? key,
+    this.supervisor,
+    this.email,
+    this.contact,
+  }) : super(key: key);
 
-   Supervisor({Key? key,required this.supervisor,required this.email,required this.contact}) : super(key: key);
+  final String? supervisor, email, contact;
+  @override
+  _SupervisorState createState() => _SupervisorState();
+}
+
+class _SupervisorState extends State<Supervisor> {
+  late TextEditingController supervisor =
+      TextEditingController(text: widget.supervisor ?? '-');
+  late TextEditingController email =
+      TextEditingController(text: widget.email ?? '-');
+  late TextEditingController contact =
+      TextEditingController(text: widget.contact ?? '-');
+
+  @override
+  void initState() {
+    super.initState();
+    supervisor = TextEditingController(text: widget.supervisor ?? '-');
+    email = TextEditingController(text: widget.email ?? '-');
+    contact = TextEditingController(text: widget.contact ?? '-');
+  }
+
+  Widget _buildDetail(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+        const SizedBox(height: 50),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,41 +56,44 @@ class Supervisor extends StatelessWidget {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 20),
-              const Text('Supervisor',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-                  Text(supervisor, style: const TextStyle(fontSize: 16)),
+              _buildDetail('Supervisor', supervisor.text),
+              _buildDetail('Email', email.text),
+              _buildDetail('Contact No', contact.text),
               const SizedBox(height: 50),
-              const Text('Email',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-                  Text(email, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 50),
-              const Text('Contact No',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-                  Text(contact, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 70),
               Container(
-                alignment: Alignment.bottomRight,
-                child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    onPressed: () {
-                    Navigator.push(
+                  child: Row(children: [
+                Expanded(
+                    child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SupervisorForm(),
+                        builder: (context) => SupervisorForm(
+                          initialSupervisor: supervisor.text,
+                          initialEmail: email.text,
+                          initialContact: contact.text,
+                        ),
                       ),
                     );
+
+                    if (result != null) {
+                      setState(() {
+                        print('Result: $result');
+                        supervisor.text = result['supervisor'] ?? '-';
+                        email.text = result['email'] ?? '-';
+                        contact.text = result['contact'] ?? '-';
+                      });
+                    }
                   },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    icon: const Icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  icon: const Icon(
                       Icons.edit_rounded), // Icon data for elevated button
                   label: const Text("Edit"),
-                  ))
-                ])),
-
+                ))
+              ])),
             ])));
   }
 }
