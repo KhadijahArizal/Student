@@ -1,25 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:student/LayerTwo/Tab/student.dart';
 
 class studentForm extends StatefulWidget {
-  const studentForm({Key? key}) : super(key: key);
+  const studentForm(
+      {Key? key,
+      this.initialBr,
+      this.initialName,
+      this.initialContact,
+      this.initialAddress,
+      this.initialIc,
+      this.initialCitizenship,
+      this.initialMajor})
+      : super(key: key);
+
+  final String? initialBr,
+      initialName,
+      initialContact,
+      initialAddress,
+      initialIc,
+      initialCitizenship,
+      initialMajor;
 
   @override
   _studentFormState createState() => _studentFormState();
 }
 
 const List<String> major = <String>['Major', 'BIT', 'BCS'];
-const List<String> a = <String>['Br', 'Sr'];
-String dropdownValue = '';
+const List<String> br = <String>['Br', 'Sr'];
+String dropdownValueMajor = 'Major';
+String dropDownValueBr = 'Br';
 
 class _studentFormState extends State<studentForm> {
   final _formKey = GlobalKey<FormState>();
-  //TextEditingController major = TextEditingController();
+  TextEditingController name = TextEditingController();
+  TextEditingController contact = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController ic = TextEditingController();
-  TextEditingController phone = TextEditingController();
   TextEditingController citizenship = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialName != null) {
+      dropDownValueBr = widget.initialBr ?? '-';
+      name.text = widget.initialName!;
+      contact.text = widget.initialContact ?? '-';
+      address.text = widget.initialAddress ?? '-';
+      ic.text = widget.initialIc ?? '-';
+      citizenship.text = widget.initialCitizenship ?? '-';
+      dropdownValueMajor = widget.initialMajor ?? '-';
+    }
+  }
+
+  void goStudent() {
+    Navigator.pop(context, {
+      'br': dropDownValueBr,
+      'name': name.text,
+      'contact': contact.text,
+      'address': address.text,
+      'ic': ic.text,
+      'citizenship': citizenship.text,
+      'major': dropdownValueMajor
+    });
+  }
 
   Widget _name({required String name}) => Container(
         alignment: Alignment.topLeft,
@@ -129,24 +172,59 @@ class _studentFormState extends State<studentForm> {
                                         MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Flexible(
-                                          child: DropdownMenu<String>(
-                                        initialSelection: a.first,
-                                        onSelected: (String? value) {
-                                          setState(() {
-                                            dropdownValue = value!;
-                                          });
-                                        },
-                                        dropdownMenuEntries: a
-                                            .map<DropdownMenuEntry<String>>(
+                                          flex: 1,
+                                          child: Container(
+                                            margin: const EdgeInsets.symmetric(
+                                                vertical: 8),
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: Colors.grey[100],
+                                            ),
+                                            child: DropdownButton<String>(
+                                              isExpanded: true,
+                                              underline:
+                                                  Container(), // Remove underline
+                                              value: dropDownValueBr,
+                                              onChanged: (String? value) {
+                                                setState(() {
+                                                  dropDownValueBr = value!;
+                                                });
+                                              },
+                                              items: br.map<
+                                                  DropdownMenuItem<String>>(
                                                 (String value) {
-                                          return DropdownMenuEntry<String>(
-                                              value: value, label: value);
-                                        }).toList(),
-                                      )),
+                                                  return DropdownMenuItem<
+                                                      String>(
+                                                    value: value,
+                                                    child: Container(
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              left: 5),
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      child: Text(value),
+                                                    ),
+                                                  );
+                                                },
+                                              ).toList(),
+                                              icon: const Icon(
+                                                  Icons.keyboard_arrow_down),
+                                              iconSize: 24,
+                                              elevation: 16,
+                                            ),
+                                          )),
                                       const SizedBox(width: 10),
                                       Flexible(
+                                          flex: 2,
                                           child: TextFormField(
-                                              decoration: InputDecoration(
+                                            onChanged: (value) {
+                                              setState(() {
+                                                name.text = value;
+                                              });
+                                            },
+                                            decoration: InputDecoration(
                                                 border: OutlineInputBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -160,9 +238,10 @@ class _studentFormState extends State<studentForm> {
                                                 filled: true,
                                                 prefixIcon: const Icon(
                                                     Icons.title_rounded),
-                                                labelText: 'your name',
-                                              ),
-                                              enabled: false)),
+                                                labelText: 'Name',
+                                                hintText:
+                                                    "Similar to i-Ma'luum"),
+                                          )),
                                     ],
                                   ),
                                   const SizedBox(height: 20),
@@ -178,139 +257,150 @@ class _studentFormState extends State<studentForm> {
                                         filled: true,
                                         prefixIcon:
                                             const Icon(Icons.link_rounded),
-                                        labelText: 'matric no',
+                                        labelText: 'Matric no',
                                       ),
                                       enabled: false),
                                   const SizedBox(height: 20),
-                                  TextFormField(
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.link_rounded),
-                                      labelText: 'email',
+                                  Container(
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 8),
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey[100],
+                                    ),
+                                    child: DropdownButton<String>(
+                                      isExpanded: true,
+                                      underline:
+                                          Container(), // Remove underline
+                                      value: dropdownValueMajor,
+                                      onChanged: (String? value) {
+                                        setState(() {
+                                          dropdownValueMajor = value!;
+                                        });
+                                      },
+                                      items:
+                                          major.map<DropdownMenuItem<String>>(
+                                        (String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Container(
+                                              margin: const EdgeInsets.only(
+                                                  left: 5),
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(value),
+                                            ),
+                                          );
+                                        },
+                                      ).toList(),
+                                      icon:
+                                          const Icon(Icons.keyboard_arrow_down),
+                                      iconSize: 24,
+                                      elevation: 16,
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        address.text = value;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon: const Icon(Icons.location_on_rounded),
-                                      labelText: 'Current Address',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        ic.text = value;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.credit_card_rounded),
-                                      labelText: 'IC/Passport No',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        citizenship.text = value;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.flag_circle_rounded),
-                                      labelText: 'Citizenship',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        phone.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon: const Icon(Icons.call_rounded),
-                                      labelText: 'Phone No',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  
-                                  DropdownMenu<String>(
-                                    initialSelection: major.first,
-                                    onSelected: (String? value) {
-                                      setState(() {
-                                        dropdownValue = value!;
-                                      });
-                                    },
-                                    dropdownMenuEntries: major
-                                        .map<DropdownMenuEntry<String>>(
-                                            (String value) {
-                                      return DropdownMenuEntry<String>(
-                                          value: value, label: value);
-                                    }).toList(),
-                                  )
                                 ]))),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          onChanged: (value) {
+                            setState(() {
+                              contact.text = value;
+                            });
+                          },
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    width: 0, style: BorderStyle.none)),
+                            fillColor: Colors.grey[100],
+                            filled: true,
+                            prefixIcon: const Icon(Icons.call_rounded),
+                            labelText: 'Contact No',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      width: 0, style: BorderStyle.none)),
+                              fillColor: Colors.grey[100],
+                              filled: true,
+                              prefixIcon: const Icon(Icons.link_rounded),
+                              labelText: 'E-mail',
+                            ),
+                            enabled: false),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          onChanged: (value) {
+                            setState(() {
+                              address.text = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    width: 0, style: BorderStyle.none)),
+                            fillColor: Colors.grey[100],
+                            filled: true,
+                            prefixIcon: const Icon(Icons.location_on_rounded),
+                            labelText: 'Current Address',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          onChanged: (value) {
+                            setState(() {
+                              ic.text = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    width: 0, style: BorderStyle.none)),
+                            fillColor: Colors.grey[100],
+                            filled: true,
+                            prefixIcon: const Icon(Icons.credit_card_rounded),
+                            labelText: 'IC/Passport No',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          onChanged: (value) {
+                            setState(() {
+                              citizenship.text = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    width: 0, style: BorderStyle.none)),
+                            fillColor: Colors.grey[100],
+                            filled: true,
+                            prefixIcon: const Icon(Icons.flag_circle_rounded),
+                            labelText: 'Citizenship',
+                          ),
+                        ),
                         const SizedBox(height: 25),
                         Container(
                             alignment: Alignment.bottomRight,
                             child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                 Expanded(child: ElevatedButton(
+                                  Expanded(
+                                      child: ElevatedButton(
                                     onPressed: () {
+                                      goStudent();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromRGBO(148, 112, 18, 1),
-                                           minimumSize: const Size.fromHeight(50)
-                                    ),
+                                        backgroundColor: const Color.fromRGBO(
+                                            148, 112, 18, 1),
+                                        minimumSize: const Size.fromHeight(50)),
                                     child: const Text('Save'),
                                   ))
                                 ]))
