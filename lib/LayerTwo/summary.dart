@@ -8,13 +8,13 @@ import 'package:student/SideNavBar/sideNav2.dart';
 class Summary extends StatefulWidget {
   const Summary({
     super.key,
-    required this.name,
-    required this.email,
-    required this.matric,
+    required this.dname,
+    required this.demail,
+    required this.dmatric,
   });
-  final String name;
-  final String email;
-  final String matric;
+  final String dname;
+  final String demail;
+  final String dmatric;
 
   @override
   _SummaryState createState() => _SummaryState();
@@ -240,16 +240,16 @@ class _SummaryState extends State<Summary> {
     );
   }
 
-  TextEditingController name = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController matric = TextEditingController();
+  TextEditingController sname = TextEditingController();
+  TextEditingController semail = TextEditingController();
+  TextEditingController smatric = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    name.text = widget.name;
-    email.text = widget.email;
-    matric.text = widget.matric;
+    sname.text = widget.dname;
+    semail.text = widget.demail;
+    smatric.text = widget.dmatric;
 
     statusManager.statusStream.listen((String status) {
       setState(() {
@@ -329,7 +329,7 @@ class _SummaryState extends State<Summary> {
                                         fontFamily: 'Futura'),
                                   ),
                                   _name(
-                                      name: name.text), //${widget.userData['name']}}
+                                      name: 'generate name from signin'), //${widget.userData['name']}}
                                 ]),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -358,8 +358,8 @@ class _SummaryState extends State<Summary> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _studentContact(
-                                email: email.text,
-                                matricNo: matric.text),
+                                email: 'generate email from signin',
+                                matricNo: smatric.text),
                           ],
                         ),
                       ),
@@ -515,8 +515,7 @@ class _SummaryState extends State<Summary> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  const MonthlyReport(
-                                                title: 'Monthly Report',
+                                                   MonthlyReport(reportType: ReportType.create
                                               ),
                                             ),
                                           );
