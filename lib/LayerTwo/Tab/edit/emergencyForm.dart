@@ -1,17 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:student/LayerTwo/Tab/emergency.dart';
-
 class EmergencyForm extends StatefulWidget {
-  const EmergencyForm({Key? key}) : super(key: key);
+  final String? initialEname;
+  final String? initialRelationship;
+  final String? initialEcontact;
+  final String? initialEaddress;
+
+  const EmergencyForm({
+    Key? key,
+    this.initialEname,
+    this.initialRelationship,
+    this.initialEcontact,
+    this.initialEaddress,
+  }) : super(key: key);
 
   @override
   _EmergencyFormState createState() => _EmergencyFormState();
 }
 
 class _EmergencyFormState extends State<EmergencyForm> {
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController ename = TextEditingController();
+  TextEditingController relationship = TextEditingController();
+  TextEditingController econtact = TextEditingController();
+  TextEditingController eaddress = TextEditingController();
 
-   final _formKey = GlobalKey<FormState>();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialEname != null) {
+      ename.text = widget.initialEname!;
+      relationship.text = widget.initialRelationship ?? '';
+      econtact.text = widget.initialEcontact ?? '';
+      eaddress.text = widget.initialEaddress ?? '';
+    }
+  }
+
+  void GoEmergency() {
+    Navigator.pop(context, {
+      'ename': ename.text,
+      'relationship': relationship.text,
+      'econtact': econtact.text,
+      'eaddress': eaddress.text,
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +51,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
             title: const Text(
-              'Student Details',
+              'Emergency Contact Details',
               style: TextStyle(
                   color: Colors.black87,
                   fontSize: 30,
@@ -41,7 +73,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
                 color: Color.fromRGBO(148, 112, 18, 1), size: 30)),
-       body: SafeArea(
+        body: SafeArea(
             child: Container(
                 padding: const EdgeInsets.all(20),
                 width: double.infinity,
@@ -70,7 +102,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                        
+                                        ename.text = value;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -91,7 +123,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                        
+                                        relationship.text = value;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -103,7 +135,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                               style: BorderStyle.none)),
                                       fillColor: Colors.grey[100],
                                       filled: true,
-                                      prefixIcon: const Icon(Icons.connect_without_contact),
+                                      prefixIcon: const Icon(
+                                          Icons.connect_without_contact),
                                       labelText: 'Relationship',
                                     ),
                                   ),
@@ -111,7 +144,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                        
+                                        econtact.text = value;
                                       });
                                     },
                                     keyboardType: TextInputType.number,
@@ -124,7 +157,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                               style: BorderStyle.none)),
                                       fillColor: Colors.grey[100],
                                       filled: true,
-                                      prefixIcon: const Icon(Icons.call_rounded),
+                                      prefixIcon:
+                                          const Icon(Icons.call_rounded),
                                       labelText: 'Emergency Contact Person',
                                     ),
                                   ),
@@ -132,7 +166,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                        
+                                        eaddress.text = value;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -156,14 +190,15 @@ class _EmergencyFormState extends State<EmergencyForm> {
                             child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Expanded(child:ElevatedButton(
+                                  Expanded(
+                                      child: ElevatedButton(
                                     onPressed: () {
+                                      GoEmergency();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromRGBO(148, 112, 18, 1),
-                                           minimumSize: const Size.fromHeight(50)
-                                    ),
+                                        backgroundColor: const Color.fromRGBO(
+                                            148, 112, 18, 1),
+                                        minimumSize: const Size.fromHeight(50)),
                                     child: const Text('Save'),
                                   ))
                                 ]))
