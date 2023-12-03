@@ -204,7 +204,7 @@ class _CompanyFormState extends State<CompanyForm> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          alignment: Alignment.bottomCenter,
+                            alignment: Alignment.bottomCenter,
                             padding: const EdgeInsets.symmetric(vertical: 5),
                             child: Form(
                                 key: _formKey,
@@ -494,7 +494,9 @@ class _CompanyFormState extends State<CompanyForm> {
                                             );
 
                                             if (pickedDate != null &&
-                                                pickedDate != startDate) {
+                                                (startDate == null ||
+                                                    pickedDate
+                                                        .isAfter(startDate!))) {
                                               setState(() {
                                                 startDate = pickedDate;
                                                 start.text =
@@ -502,6 +504,10 @@ class _CompanyFormState extends State<CompanyForm> {
                                                         .format(pickedDate);
                                                 calculateDuration();
                                               });
+                                            } else {
+                                              // Display an error for an invalid date range.
+                                              showErrorDialog(
+                                                  'Invalid date range');
                                             }
                                           },
                                         ),
@@ -534,7 +540,9 @@ class _CompanyFormState extends State<CompanyForm> {
                                             );
 
                                             if (pickedDate != null &&
-                                                pickedDate != endDate) {
+                                                (endDate == null ||
+                                                    pickedDate
+                                                        .isAfter(endDate!))) {
                                               setState(() {
                                                 endDate = pickedDate;
                                                 end.text =
@@ -542,6 +550,10 @@ class _CompanyFormState extends State<CompanyForm> {
                                                         .format(pickedDate);
                                                 calculateDuration();
                                               });
+                                            } else {
+                                              // Display an error for an invalid date range.
+                                              showErrorDialog(
+                                                  'Invalid date range');
                                             }
                                           },
                                         ),
@@ -717,30 +729,38 @@ class _CompanyFormState extends State<CompanyForm> {
 
   void calculateDuration() {
     if (startDate != null && endDate != null) {
-      Duration difference = endDate!.difference(startDate!);
-      int months = (difference.inDays / 30).floor();
-
-      if (months < 6) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Error'),
-              content: const Text('Duration must be at least 6 months.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
+      if (endDate!.isBefore(startDate!)) {
+        showErrorDialog('Invalid date range');
       } else {
-        duration.text = months.toString();
+        Duration difference = endDate!.difference(startDate!);
+        int months = (difference.inDays / 30).floor();
+
+        if (months < 6) {
+          showErrorDialog('Duration must be at least 6 months.');
+        } else {
+          duration.text = months.toString();
+        }
       }
     }
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
