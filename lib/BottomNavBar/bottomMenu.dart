@@ -55,7 +55,7 @@ class BottomMenu extends StatelessWidget {
       case 'Summary':
         return isSelected ? Icons.dashboard : Icons.dashboard_rounded;
       case 'Monthly Report':
-        return isSelected ? Icons.edit : Icons.edit_document;
+        return isSelected ? Icons.add_circle : Icons.add_circle;
       case 'Final Report':
         return isSelected ? Icons.assignment : Icons.assignment_outlined;
       case 'Details':
