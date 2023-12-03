@@ -1,20 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:student/LayerTwo/Tab/supervisor.dart';
 
 class SupervisorForm extends StatefulWidget {
-  const SupervisorForm({Key? key}) : super(key: key);
+  const SupervisorForm({
+    Key? key,
+    this.initialSupervisor,
+    this.initialEmail,
+    this.initialContact,
+  }) : super(key: key);
+
+  final String? initialSupervisor, initialEmail, initialContact;
 
   @override
   _SupervisorFormState createState() => _SupervisorFormState();
 }
 
 class _SupervisorFormState extends State<SupervisorForm> {
-  final TextEditingController name = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController supervisor = TextEditingController();
   final TextEditingController email = TextEditingController();
   final TextEditingController contact = TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSupervisor != null) {
+      supervisor.text = widget.initialSupervisor ?? '-';
+      email.text = widget.initialEmail ?? '-';
+      contact.text = widget.initialContact ?? '-';
+    }
+  }
+
+  void goSupervisor() {
+    Navigator.pop(context, {
+      'supervisor': supervisor.text,
+      'email': email.text,
+      'contact': contact.text
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +96,7 @@ class _SupervisorFormState extends State<SupervisorForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                       name.text = value;
+                                        supervisor.text = value;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -94,7 +117,7 @@ class _SupervisorFormState extends State<SupervisorForm> {
                                   TextFormField(
                                     onChanged: (value) {
                                       setState(() {
-                                       email.text = value;
+                                        email.text = value;
                                       });
                                     },
                                     keyboardType: TextInputType.emailAddress,
@@ -131,7 +154,7 @@ class _SupervisorFormState extends State<SupervisorForm> {
                                       filled: true,
                                       prefixIcon:
                                           const Icon(Icons.call_rounded),
-                                      labelText: 'Emergency Contact Person',
+                                      labelText: 'Contact No',
                                     ),
                                   ),
                                 ]))),
@@ -144,17 +167,7 @@ class _SupervisorFormState extends State<SupervisorForm> {
                                   Expanded(
                                       child: ElevatedButton(
                                     onPressed: () {
-                                      Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          Supervisor(
-                                                              supervisor:
-                                                                  name
-                                                                      .text,
-                                                              email:
-                                                                  email.text,
-                                                              contact: contact
-                                                                  .text)));
+                                      goSupervisor();
                                     },
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color.fromRGBO(
