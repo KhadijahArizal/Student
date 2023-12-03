@@ -72,16 +72,17 @@ class _CoverLetterState extends State<CoverLetter> {
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
-          leading: IconButton(
-          icon: Icon(
-            size: 25,
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.black87.withOpacity(0.7),// Use the specified color
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+            leading: IconButton(
+              icon: Icon(
+                size: 25,
+                Icons.arrow_back_ios_new_rounded,
+                color:
+                    Colors.black87.withOpacity(0.7), // Use the specified color
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
             title: const Text(
               'Cover Letter',
               style: TextStyle(
@@ -101,7 +102,7 @@ class _CoverLetterState extends State<CoverLetter> {
           child: Container(
               padding: const EdgeInsets.all(10),
               width: double.infinity,
-                height: double.infinity,
+              height: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 image: DecorationImage(
@@ -365,50 +366,60 @@ class _CoverLetterState extends State<CoverLetter> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
-                    padding:
-                        const EdgeInsets.all(10),
-                    child: Icon(
-                      Icons.download_done_rounded,
-                      size: 110,
-                      color: Colors.green[800], //<-- SEE HERE
-                    )),
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(
+                    Icons.done_all_rounded,
+                    size: 110,
+                    color: Colors.green[800],
+                  ),
+                ),
                 const Padding(
-                    padding: EdgeInsets.only(bottom: 10, left: 20, right: 20),
-                    child: Text(
-                      'Thank You',
-                      style: TextStyle(
-                          color: Color.fromRGBO(148, 112, 18, 1),
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Futura'),
-                    )),
+                  padding: EdgeInsets.only(bottom: 10, left: 20, right: 20),
+                  child: Text(
+                    'Thank You',
+                    textAlign: TextAlign.center, //<-- Center text here
+                    style: TextStyle(
+                      color: Color.fromRGBO(148, 112, 18, 1),
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Futura',
+                    ),
+                  ),
+                ),
                 const Padding(
-                    padding: EdgeInsets.only(bottom: 10, left: 20, right: 20),
-                    child: Text(
-                      'your request has been send successfully!',
-                      style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
-                          fontFamily: 'Futura'),
-                    )),
+                  padding: EdgeInsets.only(bottom: 10, left: 20, right: 20),
+                  child: Text(
+                    'Your request has been sent successfully!',
+                    textAlign: TextAlign.center, //<-- Center text here
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 13,
+                      fontFamily: 'Futura',
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           actions: [
             Center(
-                child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                    ),
-                    child: const Text(
-                      'Ok',
-                      style:
-                          TextStyle(color: Colors.white, fontFamily: 'Futura'),
-                    ))),
-            const SizedBox(height: 10)
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Futura',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
           ],
         );
       },
