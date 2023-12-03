@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:student/BottomNavBar/bottomMenu.dart';
+import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
 import 'package:student/LayerTwo/Tab/emergency.dart';
 import 'package:student/LayerTwo/Tab/student.dart';
-import 'package:country_flags/country_flags.dart';
 import 'Detect Status/statusManagament.dart';
 
 void main() => runApp(const MaterialApp(
@@ -12,7 +12,7 @@ void main() => runApp(const MaterialApp(
     ));
 
 class Details extends StatefulWidget {
-  const Details({Key? key, required String title}) : super(key: key);
+  const Details({Key? key}) : super(key: key);
 
   @override
   _DetailsState createState() => _DetailsState();
@@ -20,6 +20,7 @@ class Details extends StatefulWidget {
 
 class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
   final StatusManagement statusManager = StatusManagement();
+  late TabController tabController;
 
   Widget _name({required String name}) => Container(
         alignment: Alignment.center,
@@ -37,14 +38,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
         ),
       );
 
-  String name = '';
-  String relationship = '';
-  String econtact = '';
-  String address = '';
-  late TabController tabController;
-
   int _currentIndex = 3;
-
   void onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
@@ -61,6 +55,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
       }
     });
   }
+
 
   @override
   void initState() {
@@ -79,22 +74,22 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
-          title: const Text(
-            'Details',
-            style: TextStyle(
-                color: Colors.black87,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Futura'),
-          ),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
-          iconTheme: const IconThemeData(
-            color: Color.fromRGBO(148, 112, 18, 1),
-            size: 30,
-          ),
-          leading: Builder(
+        title: const Text(
+          'Details',
+          style: TextStyle(
+              color: Colors.black87,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura'),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        iconTheme: const IconThemeData(
+          color: Color.fromRGBO(148, 112, 18, 1),
+          size: 30,
+        ),
+        leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.sort,
@@ -104,7 +99,8 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
               },
             );
           },
-        ),),
+        ),
+      ),
       drawer: sideNav2(studentStatus: statusManager.studentStatus),
       body: SafeArea(
           child: Container(
@@ -204,16 +200,16 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.center,
                                               children: [
-                                                CountryFlags.flag(
-                                                  'id',
-                                                  height: 30,
-                                                  width: 50,
-                                                  borderRadius: 8,
-                                                ),
-                                                const VerticalDivider(
-                                                  color: Colors.black87,
-                                                ),
-                                                _name(name: 'Zahra Fathanah'),
+                                                Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      _name(
+                                                          name:
+                                                              dropDownValueBr),
+                                                              const SizedBox(width: 5)
+                                                    ]),
                                               ]),
                                           const SizedBox(height: 10),
                                           const Divider(
@@ -252,108 +248,23 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                       Expanded(
                                         child: TabBarView(
                                           controller: tabController,
-                                          children: [
-                                            //PERSONAL
+                                          children: const [
+                                            // PERSONAL
                                             Student(
-                                              address: '',
-                                              ic: '',
-                                              name: '',
-                                              phone: '',
-                                              major: '',
+                                              name: '-',
+                                              contact: '-',
+                                              address: '-',
+                                              ic: '-',
+                                              citizenship: '-',
                                             ),
-                                            /*SingleChildScrollView(
-                                                  child: Container(
-                                                      color: Colors.white
-                                                          .withOpacity(0.1),
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              40),
-                                                      child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            const SizedBox(
-                                                                height: 10),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Column(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .start,
-                                                                  children: const [
-                                                                    Text(
-                                                                        'Major'),
-                                                                  ],
-                                                                ),
-                                                                Column(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .end,
-                                                                  children: const [
-                                                                    Text(
-                                                                        'IC/Passport No'),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 50),
-                                                            const Text(
-                                                                'Phone No'),
-                                                            const SizedBox(
-                                                                height: 50),
-                                                            const Text('Email'),
-                                                            const SizedBox(
-                                                                height: 50),
-                                                            const Text(
-                                                                'Current Address'),
-                                                            const SizedBox(
-                                                                height: 70),
-                                                            Container(
-                                                                alignment: Alignment
-                                                                    .bottomRight,
-                                                                child:
-                                                                    ElevatedButton
-                                                                        .icon(
-                                                                  onPressed:
-                                                                      () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .push(MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                const studentForm()));
-                                                                  },
-                                                                  style: ElevatedButton
-                                                                      .styleFrom(
-                                                                    backgroundColor:
-                                                                        const Color.fromRGBO(
-                                                                            148,
-                                                                            112,
-                                                                            18,
-                                                                            1),
-                                                                  ),
-                                                                  icon: const Icon(
-                                                                      Icons
-                                                                          .edit), //icon data for elevated button
-                                                                  label: const Text(
-                                                                      "Edit"), //label text
-                                                                ))
-                                                          ]))),*/
-                                            //EMERGENCY
+
+                                            // EMERGENCY
                                             Emergency(
-                                              name:
-                                                  name, // Pass the 'name' collected in EmergencyForm
-                                              relationship:
-                                                  relationship, // Pass the 'relationship' collected in EmergencyForm
-                                              address:
-                                                  address, // Pass the 'address' collected in EmergencyForm
-                                              econtact:
-                                                  econtact, // Pass the 'econtact' collected in EmergencyForm
-                                            )
+                                              ename: '-',
+                                              relationship: '-',
+                                              eaddress: '-',
+                                              econtact: '-',
+                                            ),
                                           ],
                                         ),
                                       )
