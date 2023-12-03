@@ -25,16 +25,19 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color.fromRGBO(148, 112, 18, 1),
         fontFamily: 'Futura',
       ),
-      initialRoute: '/iap',
+      initialRoute: '/summary',
       routes: {
-        '/': (context) => SplashScreen(),
+        /*'/a': (context) => AttachFileDetailsPage(
+              fileName: 'YourFileName',
+              initialCreationDate: DateTime.now(), // Replace with the actual creation date
+            ),*/
         '/signIn': (context) => const SignIn(),
         '/adminreview': (context) => const AdminReviewPage(name: '', email: '', matric: '',),
-        '/summary': (context) => const Summary(name: '', matric: '', email: ''),
+        '/summary': (context) => const Summary(dname: '', dmatric: '', demail: ''),
         '/monthly_report': (context) =>
-            const MonthlyReport(title: 'Monthly Report'),
+             MonthlyReport(reportType: ReportType.create),
         '/final_report': (context) => const FinalReport(title: '', drive: '', date: '',),
-        '/details': (context) => const Details(title: 'Details'),
+        '/details': (context) => const Details(),
         '/placements': (context) => const Placements(
               title: 'Placements',
               companyName: '',
@@ -42,7 +45,7 @@ class MyApp extends StatelessWidget {
               companyPostcode: '',
               monthlyAllowance: '',
             ),
-            '/iap': (context) =>
+         '/iap': (context) =>
             const IapForm(),
       },
     );
