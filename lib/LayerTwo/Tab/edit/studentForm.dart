@@ -1,8 +1,9 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class studentForm extends StatefulWidget {
-  const studentForm(
+   studentForm(
       {Key? key,
       this.initialBr,
       this.initialName,
@@ -10,7 +11,8 @@ class studentForm extends StatefulWidget {
       this.initialAddress,
       this.initialIc,
       this.initialCitizenship,
-      this.initialMajor})
+      this.initialMajor,
+      required this.matric,})
       : super(key: key);
 
   final String? initialBr,
@@ -20,6 +22,7 @@ class studentForm extends StatefulWidget {
       initialIc,
       initialCitizenship,
       initialMajor;
+    final String matric;
 
   @override
   _studentFormState createState() => _studentFormState();
@@ -37,10 +40,14 @@ class _studentFormState extends State<studentForm> {
   TextEditingController address = TextEditingController();
   TextEditingController ic = TextEditingController();
   TextEditingController citizenship = TextEditingController();
+  late String _matric;
+  late DatabaseReference studentdb;
 
   @override
   void initState() {
     super.initState();
+    studentdb = FirebaseDatabase.instance.ref('Student Details');
+    _matric = widget.matric;
     if (widget.initialName != null) {
       dropDownValueBr = widget.initialBr ?? '-';
       name.text = widget.initialName!;
@@ -77,17 +84,21 @@ class _studentFormState extends State<studentForm> {
         ),
       );
 
-  Widget _matric({required String matric}) => Container(
-        alignment: Alignment.topLeft,
+  Widget _matricNo({required String matricNo}) => Container(
         child: Column(
           children: [
             Text(
-              matric,
-              style: const TextStyle(color: Colors.black87, fontSize: 17),
+              matricNo,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontFamily: 'Futura',
+                  fontWeight: FontWeight.bold),
             )
           ],
         ),
       );
+
 
   Widget _email({required String email}) => Container(
         alignment: Alignment.topLeft,
@@ -184,8 +195,7 @@ class _studentFormState extends State<studentForm> {
                                             ),
                                             child: DropdownButton<String>(
                                               isExpanded: true,
-                                              underline:
-                                                  Container(), // Remove underline
+                                              underline: Container(),
                                               value: dropDownValueBr,
                                               onChanged: (String? value) {
                                                 setState(() {
@@ -245,21 +255,16 @@ class _studentFormState extends State<studentForm> {
                                     ],
                                   ),
                                   const SizedBox(height: 20),
-                                  TextFormField(
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            borderSide: const BorderSide(
-                                                width: 0,
-                                                style: BorderStyle.none)),
-                                        fillColor: Colors.grey[100],
-                                        filled: true,
-                                        prefixIcon:
-                                            const Icon(Icons.link_rounded),
-                                        labelText: 'Matric no',
-                                      ),
-                                      enabled: false),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      const Text('Matric No',
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.black54)),
+                                      _matricNo(matricNo: _matric),
+                                    ],
+                                  ),
                                   const SizedBox(height: 20),
                                   Container(
                                     margin:
@@ -395,13 +400,24 @@ class _studentFormState extends State<studentForm> {
                                   Expanded(
                                       child: ElevatedButton(
                                     onPressed: () {
+                                      studentdb.set({
+                                'Student Name': name.text,
+                                'Matric No': _matric,
+                                //'Email': email,
+                                'Major': dropdownValueMajor,
+                                'Contact No': contact.text,
+                                'Address': address.text,
+                                'IC or Passport': ic.text,
+                                'Citizenship': citizenship.text,
+                              });
                                       goStudent();
                                     },
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color.fromRGBO(
                                             148, 112, 18, 1),
                                         minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save'),
+                                    child: const Text('Save',
+                                        style: TextStyle(color: Colors.white)),
                                   ))
                                 ]))
                       ]),
