@@ -7,20 +7,20 @@ class Supervisor extends StatefulWidget {
     this.supervisor,
     this.email,
     this.contact,
+    required this.onSupervisorChanged,
   }) : super(key: key);
 
-  final String? supervisor, email, contact;
+  final String? email, contact, supervisor;
+  final Function(String supervisor, String email) onSupervisorChanged;
+
   @override
   _SupervisorState createState() => _SupervisorState();
 }
 
 class _SupervisorState extends State<Supervisor> {
-  late TextEditingController supervisor =
-      TextEditingController(text: widget.supervisor ?? '-');
-  late TextEditingController email =
-      TextEditingController(text: widget.email ?? '-');
-  late TextEditingController contact =
-      TextEditingController(text: widget.contact ?? '-');
+  late TextEditingController supervisor;
+  late TextEditingController email;
+  late TextEditingController contact;
 
   @override
   void initState() {
@@ -65,34 +65,43 @@ class _SupervisorState extends State<Supervisor> {
                 Expanded(
                     child: ElevatedButton.icon(
                   onPressed: () async {
-                    final result = await Navigator.push(
+                    Map<String, dynamic> result;
+                    result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => SupervisorForm(
                           initialSupervisor: supervisor.text,
                           initialEmail: email.text,
                           initialContact: contact.text,
+                          onSupervisorChanged: (newSupervisor, newEmail) {
+                            setState(() {
+                              supervisor.text = newSupervisor;
+                              email.text = newEmail;
+                            });
+
+                            widget.onSupervisorChanged(newSupervisor, newEmail);
+                          },
                         ),
                       ),
                     );
 
-                    if (result != null) {
-                      setState(() {
-                        print('Result: $result');
-                        supervisor.text = result['supervisor'] ?? '-';
-                        email.text = result['email'] ?? '-';
-                        contact.text = result['contact'] ?? '-';
-                      });
-                    }
-                  },
+                    setState(() {
+                      print('Result: $result');
+                      //print(widget.supervisor!);
+                      supervisor.text = result['supervisor'] ?? '-';
+                      email.text = result['email'] ?? '-';
+                      contact.text = result['contact'] ?? '-';
+                    });
+                                    },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
                     minimumSize: const Size.fromHeight(50),
                   ),
-                  icon: const Icon(
-                      Icons.edit_rounded), // Icon data for elevated button
-                  label: const Text("Edit"),
-                ))
+                  icon: const Icon(Icons.edit_rounded,
+                      color: Colors.white), // Icon data for elevated button
+                  label:
+                      const Text("Edit", style: TextStyle(color: Colors.white)),
+                )),
               ])),
             ])));
   }
