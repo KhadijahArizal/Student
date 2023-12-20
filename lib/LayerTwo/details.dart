@@ -21,6 +21,7 @@ class Details extends StatefulWidget {
 class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
   final StatusManagement statusManager = StatusManagement();
   late TabController tabController;
+  late StatusManagement _statusManagement;
 
   Widget _name({required String name}) => Container(
         alignment: Alignment.center,
@@ -44,9 +45,9 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
       _currentIndex = index;
       if (index == 0) {
         Navigator.pushNamed(context, '/summary');
-      } else if (index == 1) {
+      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2) {
+      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
       } else if (index == 3) {
         Navigator.pushNamed(context, '/details');
@@ -56,9 +57,9 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
     });
   }
 
-
   @override
   void initState() {
+    _statusManagement = StatusManagement();
     tabController = TabController(length: 2, vsync: this);
     super.initState();
   }
@@ -66,6 +67,8 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     tabController.dispose();
+    _statusManagement.dispose();
+
     super.dispose();
   }
 
@@ -208,28 +211,23 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                                       _name(
                                                           name:
                                                               dropDownValueBr),
-                                                              const SizedBox(width: 5)
+                                                      const SizedBox(width: 5)
                                                     ]),
                                               ]),
-                                          const SizedBox(height: 10),
-                                          const Divider(
-                                            color: Colors.white,
-                                          ),
                                           const SizedBox(height: 5),
                                           DefaultTabController(
                                             length: 2,
                                             child: TabBar(
-                                              unselectedLabelColor:
-                                                  Colors.white,
-                                              labelColor: const Color.fromRGBO(
-                                                  148, 112, 18, 1),
-                                              indicatorColor: Colors.white,
-                                              indicatorWeight: 2,
-                                              indicator: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                color: Colors.white,
-                                              ),
+                                              unselectedLabelColor: Colors.white,
+                                  labelColor:
+                                      const Color.fromRGBO(148, 112, 18, 1),
+                                  indicatorColor: Colors.white,
+                                  indicatorWeight: 0.0,
+                                  indicatorSize: TabBarIndicatorSize.tab,
+                                  indicator: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(5),
+                                    color: Colors.white,
+                                  ),
                                               controller: tabController,
                                               tabs: const [
                                                 Tab(
@@ -255,7 +253,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                               contact: '-',
                                               address: '-',
                                               ic: '-',
-                                              citizenship: '-',
+                                              citizenship: '-', initialMatric: '-',
                                             ),
 
                                             // EMERGENCY
@@ -284,6 +282,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
           'Details': '/details',
           'Placements': '/placements',
         },
+        studentStatus: _statusManagement.studentStatus,
       ),
     );
   }
