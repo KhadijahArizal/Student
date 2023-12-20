@@ -1,20 +1,30 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:student/BottomNavBar/bottomMenu.dart';
 import 'package:student/LayerTwo/Detect%20Status/statusManagament.dart';
 import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
+import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
+import 'package:student/layerOne/iapForm.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Summary extends StatefulWidget {
   const Summary({
-    super.key,
-    required this.dname,
-    required this.demail,
-    required this.dmatric,
-  });
-  final String dname;
-  final String demail;
-  final String dmatric;
+    Key? key,
+    this.dname,
+    this.demail,
+    this.dmatric,
+    this.start,
+    this.end,
+    this.approvedCount,
+    this.pendingCount,
+    this.rejectedCount,
+  }) : super(key: key);
+
+  final String? start, end;
+  final String? dname, demail, dmatric;
+  final int? approvedCount, pendingCount, rejectedCount;
 
   @override
   _SummaryState createState() => _SummaryState();
@@ -22,6 +32,7 @@ class Summary extends StatefulWidget {
 
 class _SummaryState extends State<Summary> {
   final statusManager = StatusManagement();
+  late StatusManagement _statusManagement;
   bool _isVisible = false;
   String _status = '';
 
@@ -150,13 +161,16 @@ class _SummaryState extends State<Summary> {
           children: [
             Text(
               'Registered for $note',
-              style: const TextStyle(color: Colors.black87, fontSize: 16),
+              style: TextStyle(
+                  color: Colors.green[700],
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             )
           ],
         ),
       );
 
-  Widget _date({required String sdate, eDate}) {
+  Widget _date({required String startDate, required String endDate}) {
     return Container(
       alignment: Alignment.center,
       child: Row(
@@ -168,7 +182,7 @@ class _SummaryState extends State<Summary> {
                 'Start Date',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
-              Text(sdate,
+              Text(startDate,
                   style: const TextStyle(color: Colors.white, fontSize: 16)),
             ],
           ),
@@ -182,7 +196,7 @@ class _SummaryState extends State<Summary> {
                 'End Date',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
-              Text(eDate,
+              Text(endDate,
                   style: const TextStyle(color: Colors.white, fontSize: 16)),
             ],
           ),
@@ -197,9 +211,9 @@ class _SummaryState extends State<Summary> {
       _currentIndex = index;
       if (index == 0) {
         Navigator.pushNamed(context, '/summary');
-      } else if (index == 1) {
+      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2) {
+      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
       } else if (index == 3) {
         Navigator.pushNamed(context, '/details');
@@ -215,42 +229,104 @@ class _SummaryState extends State<Summary> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.email),
-                title: const Text('Email Supervisor'),
-                onTap: () {
-                  // Add logic to email supervisor here
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.email),
-                title: const Text('Email Coordinator'),
-                onTap: () {
-                  // Add logic to email coordinator here
-                },
-              ),
-            ],
+        return Material(
+          borderRadius: BorderRadius.circular(5.0),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.email),
+                  title: const Text('Email Coordinator'),
+                  onTap: () {
+                    _sendEmail('coordinator@example.com');
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.email),
+                  title: const Text('Email Supervisor'),
+                  onTap: () {
+                    _sendEmail(
+                        'supervisorEmail'); // Use the passed supervisorEmail
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.email),
+                  title: const Text('Email Examiner'),
+                  onTap: () {
+                    _sendEmail('examiner@example.com');
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  TextEditingController sname = TextEditingController();
-  TextEditingController semail = TextEditingController();
-  TextEditingController smatric = TextEditingController();
+  void _sendEmail(String recipientEmail) async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: recipientEmail,
+      queryParameters: {
+        'subject': 'Your Subject Here',
+        'body': 'Your email body goes here',
+      },
+    );
+
+    // ignore: deprecated_member_use
+    if (await canLaunch(emailLaunchUri.toString())) {
+      // ignore: deprecated_member_use
+      await launch(emailLaunchUri.toString());
+    } else {
+      // ignore: use_build_context_synchronously
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Unable to launch email app.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  late TextEditingController sname =
+      TextEditingController(text: widget.dname ?? '-');
+  late TextEditingController semail =
+      TextEditingController(text: widget.demail ?? '-');
+  late TextEditingController smatric =
+      TextEditingController(text: widget.dmatric ?? '-');
+
+  @override
+  void dispose() {
+    _statusManagement.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    sname.text = widget.dname;
-    semail.text = widget.demail;
-    smatric.text = widget.dmatric;
-
+    sname = TextEditingController(text: widget.dname ?? '-');
+    semail = TextEditingController(text: widget.demail ?? '-');
+    smatric = TextEditingController(text: widget.dmatric ?? '-');
+    _statusManagement = StatusManagement();
     statusManager.statusStream.listen((String status) {
       setState(() {
         _status = status;
@@ -261,6 +337,16 @@ class _SummaryState extends State<Summary> {
 
   @override
   Widget build(BuildContext context) {
+    final Future<FirebaseApp> fApp = Firebase.initializeApp();
+    // ignore: unnecessary_null_comparison
+    if (widget.start != null && widget.end != null) {
+      print('Start Date: ${widget.start}');
+      print('End Date: ${widget.end}');
+      print('${widget.dname}');
+      print('${widget.dmatric}');
+      print('${widget.demail}');
+    }
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
@@ -311,6 +397,17 @@ class _SummaryState extends State<Summary> {
           child: SingleChildScrollView(
             child: Stack(
               children: [
+                FutureBuilder(
+                    future: fApp,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Text('ERRORR');
+                      } else if (snapshot.hasData) {
+                        return Text('YEAYY');
+                      } else {
+                        return CircularProgressIndicator();
+                      }
+                    }),
                 Column(
                   children: [
                     Container(
@@ -325,11 +422,17 @@ class _SummaryState extends State<Summary> {
                                     style: TextStyle(
                                         color: Colors.black87,
                                         fontSize: 40,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.bold,
                                         fontFamily: 'Futura'),
                                   ),
-                                  _name(
-                                      name: 'generate name from signin'), //${widget.userData['name']}}
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                    _name(name: dropDownValueBr),
+                                    _name(
+                                        name:
+                                            '${widget.dname}'), //${widget.userData['name']}}
+                                  ])
                                 ]),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -358,11 +461,15 @@ class _SummaryState extends State<Summary> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _studentContact(
-                                email: 'generate email from signin',
-                                matricNo: smatric.text),
+                                email: widget.demail ?? '-',
+                                matricNo: smatric.text ?? '-'),
+                            _studentContact(
+                                email: '${widget.demail}',
+                                matricNo: '${widget.dmatric}')
                           ],
                         ),
                       ),
+
                       //INFO xxxx registration notes
                       Visibility(
                           visible: _isVisible,
@@ -384,7 +491,7 @@ class _SummaryState extends State<Summary> {
                                               fontSize: 15,
                                               fontFamily: 'Futura'),
                                         ),
-                                        _note(note: '/*SEMESTER CHOOSEN*/'),
+                                        _note(note: dropdownValueSem),
                                       ]),
                                 ]),
                           )),
@@ -451,7 +558,9 @@ class _SummaryState extends State<Summary> {
                                                       fontFamily: 'Futura',
                                                       fontWeight:
                                                           FontWeight.w900)),
-                                              Text('-',
+                                              Text(
+                                                  widget.approvedCount
+                                                      .toString(),
                                                   style: TextStyle(
                                                       color: Colors.green[700],
                                                       fontSize: 30,
@@ -471,7 +580,9 @@ class _SummaryState extends State<Summary> {
                                                       fontFamily: 'Futura',
                                                       fontWeight:
                                                           FontWeight.w900)),
-                                              Text('-',
+                                              Text(
+                                                  widget.pendingCount
+                                                      .toString(),
                                                   style: TextStyle(
                                                       color: Colors.yellow[700],
                                                       fontSize: 30,
@@ -491,7 +602,9 @@ class _SummaryState extends State<Summary> {
                                                       fontFamily: 'Futura',
                                                       fontWeight:
                                                           FontWeight.w900)),
-                                              Text('-',
+                                              Text(
+                                                  widget.rejectedCount
+                                                      .toString(),
                                                   style: TextStyle(
                                                       color: Colors.red[700],
                                                       fontSize: 30,
@@ -515,7 +628,11 @@ class _SummaryState extends State<Summary> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                   MonthlyReport(reportType: ReportType.create
+                                                  MonthlyReport(
+                                                reportType: ReportType.create,
+                                                onCalculateStatus:
+                                                    (int approved, int pending,
+                                                        int rejected) {},
                                               ),
                                             ),
                                           );
@@ -528,10 +645,13 @@ class _SummaryState extends State<Summary> {
                                                 100), // Set the border radius to 100
                                           ),
                                         ),
-                                        icon: const Icon(Icons
-                                            .add_circle), // Icon data for elevated button
+                                        icon: const Icon(Icons.add_circle,
+                                            color: Colors
+                                                .white), // Icon data for elevated button
                                         label: const Text(
-                                            "New Report"), // Label text
+                                          "New Report",
+                                          style: TextStyle(color: Colors.white),
+                                        ), // Label text
                                       )),
                                 ]),
                           )),
@@ -601,6 +721,7 @@ class _SummaryState extends State<Summary> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
                       Visibility(
                           visible: _isVisible,
                           child: Container(
@@ -617,7 +738,9 @@ class _SummaryState extends State<Summary> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _date(sdate: '7/12/23', eDate: '7/6/24'),
+                                _date(
+                                    startDate: widget.start ?? '-',
+                                    endDate: widget.end ?? '-'),
                               ],
                             ),
                           )),
@@ -640,13 +763,14 @@ class _SummaryState extends State<Summary> {
           'Details': '/details',
           'Placements': '/placements',
         },
+        studentStatus: _statusManagement.studentStatus,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _showOptions(context);
         },
         backgroundColor: const Color.fromRGBO(148, 112, 18, 0.8),
-        child: const Icon(Icons.email),
+        child: const Icon(Icons.email, color: Colors.white),
       ),
     );
   }
