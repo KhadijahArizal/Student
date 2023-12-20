@@ -5,7 +5,7 @@ import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
 
 class CreateReportPage extends StatefulWidget {
   final ReportType reportType;
-  
+
   CreateReportPage({required this.reportType, Key? key}) : super(key: key);
   @override
   _CreateReportPageState createState() => _CreateReportPageState();
@@ -158,7 +158,9 @@ class _CreateReportPageState extends State<CreateReportPage> {
         month: DateFormat('MMMM').format(DateTime.now()),
         submissionDate:
             DateFormat('yyyy-MM-ddTHH:mm:ss').format(DateTime.now()),
-        reportType: ReportType.create, // Pass the appropriate value
+        reportType: ReportType.create,
+        onCalculateStatus: (int approved, int pending,
+            int rejected) {}, // Pass the appropriate value
       ),
     );
   }
