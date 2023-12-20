@@ -1,3 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:student/SideNavBar/sideNav1.dart';
@@ -21,8 +25,16 @@ const List<String> sem = <String>[
   '3 2024/2025'
 ];
 
+// ignore: must_be_immutable
 class IapForm extends StatefulWidget {
-  const IapForm({Key? key}) : super(key: key);
+  IapForm({
+    Key? key,
+    this.initialName,
+    this.initialMatric,
+    this.initialEmail,
+  }) : super(key: key);
+
+  late String? initialName, initialEmail, initialMatric;
 
   @override
   _IapFormState createState() => _IapFormState();
@@ -42,7 +54,16 @@ class _IapFormState extends State<IapForm> {
   TextEditingController ch = TextEditingController();
   TextEditingController totalch = TextEditingController();
   TextEditingController note = TextEditingController();
-
+  late TextEditingController _grd;
+  late TextEditingController _partial;
+  late TextEditingController _confirm;
+  
+  //RealtimeDatabase
+  final iapformdb = FirebaseDatabase.instance.ref('IAP Form');
+  
+  //FirebaseFirestore
+  final FirebaseFirestore _firebasefr = FirebaseFirestore.instance;
+  
 
   void GoReview() {
     if (_formKey.currentState!.validate()) {
@@ -57,6 +78,23 @@ class _IapFormState extends State<IapForm> {
         ),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _grd = TextEditingController(text: "-");
+    _partial = TextEditingController(text: "-");
+    _confirm = TextEditingController(text: "-");
+
+    name.text = widget.initialName ?? '';
+    matric.text = widget.initialMatric ?? '';
+    email.text = widget.initialEmail ?? '';
   }
 
   @override
@@ -146,9 +184,7 @@ class _IapFormState extends State<IapForm> {
                             Padding(
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
-                                  onChanged: (value) {
-                                    name.text = value;
-                                  },
+                                  controller: name,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -173,9 +209,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    matric.text = value;
-                                  },
+                                  controller: matric,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -199,9 +233,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    phone.text = value;
-                                  },
+                                  controller: phone,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -226,9 +258,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.emailAddress,
-                                  onChanged: (value) {
-                                    email.text = value;
-                                  },
+                                  controller: email,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -343,9 +373,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    univ.text = value;
-                                  },
+                                  controller: univ,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -371,9 +399,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    rdepart.text = value;
-                                  },
+                                  controller: rdepart,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -399,9 +425,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    kull.text = value;
-                                  },
+                                  controller: kull,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -427,9 +451,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    edepart.text = value;
-                                  },
+                                  controller: edepart,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -455,9 +477,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    ch.text = value;
-                                  },
+                                  controller: ch,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -484,9 +504,7 @@ class _IapFormState extends State<IapForm> {
                                 padding: const EdgeInsets.all(5),
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    totalch.text = value;
-                                  },
+                                  controller: totalch,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -630,7 +648,7 @@ class _IapFormState extends State<IapForm> {
                                         ),
                                         const SizedBox(width: 10),
                                         ElevatedButton(
-                                            onPressed: () {},
+                                            onPressed: _pickFileGrd,
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
                                                   const Color.fromRGBO(
@@ -650,6 +668,15 @@ class _IapFormState extends State<IapForm> {
                                               color: Colors.black87),
                                         ),
                                       ]),
+                                  Text(
+                                    _grd.text.isNotEmpty
+                                        ? 'Selected File: ${_grd.text}'
+                                        : '',
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontFamily: 'Futura',
+                                    ),
+                                  ),
                                   Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -664,7 +691,7 @@ class _IapFormState extends State<IapForm> {
                                         ),
                                         const SizedBox(width: 10),
                                         ElevatedButton(
-                                            onPressed: () {},
+                                            onPressed: _pickFilePartial,
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
                                                   const Color.fromRGBO(
@@ -684,6 +711,15 @@ class _IapFormState extends State<IapForm> {
                                               color: Colors.black87),
                                         ),
                                       ]),
+                                  Text(
+                                    _partial.text.isNotEmpty
+                                        ? 'Selected File: ${_partial.text}'
+                                        : '',
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontFamily: 'Futura',
+                                    ),
+                                  ),
                                   Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -698,7 +734,7 @@ class _IapFormState extends State<IapForm> {
                                         ),
                                         const SizedBox(width: 10),
                                         ElevatedButton(
-                                            onPressed: () {},
+                                            onPressed: _pickFileConfirm,
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
                                                   const Color.fromRGBO(
@@ -717,7 +753,16 @@ class _IapFormState extends State<IapForm> {
                                               Icons.camera_alt_rounded,
                                               color: Colors.black87),
                                         )
-                                      ])
+                                      ]),
+                                  Text(
+                                    _confirm.text.isNotEmpty
+                                        ? 'Selected File: ${_confirm.text}'
+                                        : '',
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontFamily: 'Futura',
+                                    ),
+                                  ),
                                 ]),
                             const SizedBox(height: 20),
 
@@ -792,6 +837,25 @@ class _IapFormState extends State<IapForm> {
                                 children: [
                                   ElevatedButton(
                                     onPressed: () {
+                                      iapformdb.child('iapData').set({
+                                        'Name': name.text,
+                                        'Matric': matric.text,
+                                        'Phone No': phone.text,
+                                        'Email': email.text,
+                                        'Major': dropdownValueMajor,
+                                        'Admission Type':
+                                            dropdownValueAdmission,
+                                        'Univ Required Course': univ.text,
+                                        'Department Required Course':
+                                            rdepart.text,
+                                        'Kulliyyah Required Course': kull.text,
+                                        'Department Elective Course':
+                                            edepart.text,
+                                        'CH Current Sem': ch.text,
+                                        'Total CH': totalch.text,
+                                        'Semester': dropdownValueSem,
+                                        'Note': note.text
+                                      });
                                       GoReview();
                                     },
                                     style: ElevatedButton.styleFrom(
@@ -1025,5 +1089,81 @@ class _IapFormState extends State<IapForm> {
         );
       },
     );
+  }
+
+  
+  //STORAGE
+  Future<String?> uploadGrd(String fileName) async { //File files
+  
+    final Reference =
+        FirebaseStorage.instance.ref().child('Graduation Audit/$fileName');
+        
+    //final UploadTask = Reference.putFile(files);
+    //await UploadTask.whenComplete(() {});
+    
+    final downloadLink = await Reference.getDownloadURL();
+    return downloadLink;
+  }
+
+  void _pickFileGrd() async { 
+    try {
+      final pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      
+      if (pickedFile != null && pickedFile.files.isNotEmpty) {
+        PlatformFile file = pickedFile.files.first;
+        String fileName = pickedFile.files[0].name;
+        //File files = File(pickedFile.files[0].path!); 
+        //final downloadLink = await uploadGrd(fileName);
+
+        iapformdb.child('iapFile').set({
+          'FileName' : fileName
+        });
+
+        print('Selected file: ${file.name}');
+
+        setState(() {
+          _grd.text = pickedFile.files.first.name;
+        });
+      }
+    } catch (e) {
+      print('Error picking a file: $e');
+    }
+  }
+
+  void _pickFilePartial() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null && result.files.isNotEmpty) {
+        PlatformFile file = result.files.first;
+        print('Selected file: ${file.name}');
+
+        setState(() {
+          _partial.text = result.files.first.name;
+        });
+      }
+    } catch (e) {
+      print('Error picking a file: $e');
+    }
+  }
+
+  void _pickFileConfirm() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null && result.files.isNotEmpty) {
+        PlatformFile file = result.files.first;
+        print('Selected file: ${file.name}');
+
+        setState(() {
+          _confirm.text = result.files.first.name;
+        });
+      }
+    } catch (e) {
+      print('Error picking a file: $e');
+    }
   }
 }
