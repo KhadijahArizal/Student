@@ -186,7 +186,7 @@ class _PassphraseState extends State<Passphrase> {
                                               148, 112, 18, 1),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(5),
+                                                BorderRadius.circular(100),
                                           ),
                                           minimumSize:
                                               const Size(double.infinity, 50),
