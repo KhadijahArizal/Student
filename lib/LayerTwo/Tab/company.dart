@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:student/LayerTwo/Tab/edit/companyForm.dart';
+import 'package:open_filex/open_filex.dart';
 
 class Company extends StatefulWidget {
   const Company({
@@ -16,47 +17,90 @@ class Company extends StatefulWidget {
     this.end,
   }) : super(key: key);
 
-  final String? company,letter,zone,monthlyA,status,address,postcode,duration,start,end;
+  final String? company,
+      letter,
+      zone,
+      monthlyA,
+      status,
+      address,
+      postcode,
+      duration,
+      start,
+      end;
 
   @override
   _CompanyState createState() => _CompanyState();
 }
 
 class _CompanyState extends State<Company> {
-  late TextEditingController company =
-      TextEditingController(text: widget.company ?? '-');
-  late TextEditingController letter =
-      TextEditingController(text: widget.letter ?? '-');
-  late TextEditingController zone =
-      TextEditingController(text: widget.zone ?? '-');
-  late TextEditingController monthlyA =
-      TextEditingController(text: widget.monthlyA ?? '-');
-  late TextEditingController status =
-      TextEditingController(text: widget.status ?? '-');
-  late TextEditingController address =
-      TextEditingController(text: widget.address ?? '-');
-  late TextEditingController postcode =
-      TextEditingController(text: widget.postcode ?? '-');
-  late TextEditingController duration =
-      TextEditingController(text: widget.duration ?? '-');
-  late TextEditingController start =
-      TextEditingController(text: widget.status ?? '-');
-  late TextEditingController end =
-      TextEditingController(text: widget.status ?? '-');
+  late TextEditingController company;
+  late TextEditingController letter;
+  late TextEditingController zone;
+  late TextEditingController monthlyA;
+  late TextEditingController status;
+  late TextEditingController address;
+  late TextEditingController postcode;
+  late TextEditingController duration;
+  late TextEditingController start;
+  late TextEditingController end;
+
+  bool dataUpdated = false;
 
   @override
   void initState() {
     super.initState();
-    company = TextEditingController(text: widget.company ?? '-');
-    letter = TextEditingController(text: widget.letter ?? '-');
-    zone = TextEditingController(text: widget.zone ?? '-');
-    monthlyA = TextEditingController(text: widget.monthlyA ?? '-');
-    status = TextEditingController(text: widget.monthlyA ?? '-');
-    address = TextEditingController(text: widget.address ?? '-');
-    postcode = TextEditingController(text: widget.postcode ?? '-');
-    duration = TextEditingController(text: widget.duration ?? '-');
-    start = TextEditingController(text: widget.start ?? '-');
-    end = TextEditingController(text: widget.end ?? '-');
+    company =
+        TextEditingController(text: dataUpdated ? widget.company ?? '-' : '-');
+    letter =
+        TextEditingController(text: dataUpdated ? widget.letter ?? '-' : '-');
+    zone = TextEditingController(text: dataUpdated ? widget.zone ?? '-' : '-');
+   
+   //INI BEDA
+    monthlyA = TextEditingController(
+        text: dataUpdated ? widget.monthlyA ?? monthlyA.text : '-');
+    
+    status =
+        TextEditingController(text: dataUpdated ? widget.status ?? '-' : '-');
+    
+    //INI BEDA
+    address = TextEditingController(
+        text: dataUpdated ? address.text : '-');
+   
+    postcode =
+        TextEditingController(text: dataUpdated ? widget.postcode ?? '-' : '-');
+    duration =
+        TextEditingController(text: dataUpdated ? widget.duration ?? '-' : '-');
+    start =
+        TextEditingController(text: dataUpdated ? widget.start ?? '-' : '-');
+    end = TextEditingController(text: dataUpdated ? widget.end ?? '-' : '-');
+  }
+
+  Widget _buildOfferLetter(String label, ElevatedButton button, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[700],
+            ),
+            onPressed: () {
+              OpenFilex.open('${widget.letter}');
+            },
+            child: const Text(
+              'Offer Letter',
+              style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+            )),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+        const SizedBox(height: 50),
+      ],
+    );
   }
 
   Widget _buildDetail(String label, String value) {
@@ -105,7 +149,21 @@ class _CompanyState extends State<Company> {
           children: [
             const SizedBox(height: 20),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Offer Letter', letter.text),
+              _buildOfferLetter(
+                  'Offer Letter',
+                  ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[700],
+                      ),
+                      onPressed: () {
+                        OpenFilex.open('${widget.letter}');
+                      },
+                      child: const Text(
+                        'Offer Letter',
+                        style: TextStyle(
+                            color: Colors.white, fontFamily: 'Futura'),
+                      )),
+                  letter.text),
               _buildDetail2('Zone', dropDownValueZone)
             ]),
             _buildDetail('Industry', dropDownValueIndustry),
@@ -134,6 +192,7 @@ class _CompanyState extends State<Company> {
                     MaterialPageRoute(
                       builder: (context) => CompanyForm(
                           initialCompany: company.text,
+                          initialLetter: letter.text,
                           initialIndustry: dropDownValueIndustry,
                           initialSector: dropDownValueSector,
                           initialZone: dropDownValueZone,
@@ -151,6 +210,7 @@ class _CompanyState extends State<Company> {
                     setState(() {
                       print('Result: $result');
                       company.text = result['company'] ?? '-';
+                      letter.text = result['letter'] ?? '-';
                       dropDownValueIndustry = result['industry'] ?? '-';
                       dropDownValueSector = result['sector'] ?? '-';
                       dropDownValueZone = result['zone'] ?? '-';
@@ -167,9 +227,10 @@ class _CompanyState extends State<Company> {
                   backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
                   minimumSize: const Size.fromHeight(50),
                 ),
-                icon: const Icon(
-                    Icons.edit_rounded), // Icon data for elevated button
-                label: const Text("Edit"),
+                icon: const Icon(Icons.edit_rounded,
+                    color: Colors.white), // Icon data for elevated button
+                label:
+                    const Text("Edit", style: TextStyle(color: Colors.white)),
               ))
             ])),
           ],
