@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -9,11 +10,12 @@ class FinalReportUpload extends StatefulWidget {
     this.initialTitle,
     this.initialDrive,
     this.initialDate,
+    this.initialStatus,
+    this.onFileSelected,
   }) : super(key: key);
 
-  final String? initialTitle;
-  final String? initialDrive;
-  final String? initialDate;
+  final String? initialTitle, initialDrive, initialDate, initialStatus;
+  final void Function(String fileName)? onFileSelected;
 
   @override
   _FinalReportUploadState createState() => _FinalReportUploadState();
@@ -21,20 +23,34 @@ class FinalReportUpload extends StatefulWidget {
 
 class _FinalReportUploadState extends State<FinalReportUpload> {
   final _formKey = GlobalKey<FormState>();
+  late TextEditingController _fileNameController;
   TextEditingController title = TextEditingController();
   TextEditingController drive = TextEditingController();
   TextEditingController dateinput = TextEditingController();
+  late TextEditingController _statusController;
   DateTime selectedDate = DateTime.now();
   String? selectedFilePath;
 
+  String? _validateField(String? value, String fieldName) {
+    if (value == null || value.isEmpty) {
+      return 'Please submit your $fieldName';
+    }
+    return null;
+  }
+
+  //RealtimeDatabase
+  final finaldb = FirebaseDatabase.instance.ref('Final Report');
+  
   @override
   void initState() {
     super.initState();
-    if (widget.initialTitle != null) {
-      title.text = widget.initialTitle ?? '-';
-      drive.text = widget.initialDrive ?? '-';
-      dateinput.text = widget.initialDate ?? '-';
-    }
+    _fileNameController = TextEditingController(text: "-");
+    title.text = widget.initialTitle ?? '-';
+    drive.text = widget.initialDrive ?? '-';
+    dateinput.text = widget.initialDate ?? '-';
+    _statusController = TextEditingController(text: "-");
+    selectedDate = DateTime.now();
+    dateinput.text = DateFormat('dd MMMM yyyy').format(selectedDate);
   }
 
   Widget _File({
@@ -52,27 +68,43 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: const Icon(Icons.camera_rounded,
+      child: const Icon(Icons.camera_alt_rounded,
           size: 28, color: Color.fromRGBO(148, 112, 18, 1)),
     );
   }
 
-  Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+  void _pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-    if (result != null) {
-      setState(() {
-        selectedFilePath = result.files.single.path;
-      });
+      if (result != null && result.files.isNotEmpty) {
+        PlatformFile file = result.files.first;
+        print('Selected file: ${file.name}');
+
+        setState(() {
+          _fileNameController.text = result.files.first.name;
+        });
+
+        widget.onFileSelected?.call(file.name);
+      }
+    } catch (e) {
+      print('Error picking a file: $e');
     }
   }
 
   void goUpload() {
-    Navigator.pop(context, {
-      'title': title.text,
-      'drive': drive.text,
-      'date': dateinput.text,
-    });
+    if (_formKey.currentState!.validate()) {
+      Navigator.pop(
+        context,
+        {
+          'title': title.text,
+          'drive': drive.text,
+          'date': dateinput.text,
+          'status': _statusController.text,
+          'fileName': _fileNameController.text,
+        },
+      );
+    }
   }
 
   @override
@@ -151,6 +183,9 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                               hintText: '',
                                               labelText: 'Report Title',
                                             ),
+                                            validator: (value) =>
+                                                _validateField(
+                                                    value, 'report title'),
                                           ),
                                           const SizedBox(height: 20),
                                           Row(
@@ -194,12 +229,11 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                                         ),
                                                       ),
                                                       const SizedBox(height: 5),
-                                                      if (selectedFilePath !=
-                                                          null)
-                                                        const SizedBox(
-                                                            height: 5),
                                                       Text(
-                                                        'Selected File: $selectedFilePath',
+                                                        _fileNameController
+                                                                .text.isNotEmpty
+                                                            ? 'Selected File: ${_fileNameController.text}'
+                                                            : '',
                                                         style: TextStyle(
                                                           fontSize: 15,
                                                           color:
@@ -224,6 +258,7 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                           const SizedBox(height: 20),
                                           TextFormField(
                                             controller: dateinput,
+                                            readOnly: true,
                                             decoration: InputDecoration(
                                               border: OutlineInputBorder(
                                                 borderRadius:
@@ -235,29 +270,17 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                               fillColor: Colors.grey[100],
                                               filled: true,
                                               prefixIcon: const Icon(
-                                                  Icons.calendar_month_rounded),
+                                                  Icons.calendar_today),
                                               labelText: 'Date',
                                             ),
-                                            onTap: () async {
-                                              DateTime? pickedDate =
-                                                  await showDatePicker(
-                                                context: context,
-                                                initialDate: DateTime.now(),
-                                                firstDate: DateTime(2000),
-                                                lastDate: DateTime(2101),
-                                              );
-
-                                              if (pickedDate != null &&
-                                                  pickedDate != selectedDate) {
-                                                setState(() {
-                                                  selectedDate = pickedDate;
-                                                  dateinput.text =
-                                                      DateFormat('dd MMMM yyyy')
-                                                          .format(pickedDate);
-                                                });
-                                              }
-                                            },
-                                          )
+                                          ),
+                                          const SizedBox(height: 20),
+                                          TextFormField(
+                                            controller: _statusController,
+                                            decoration: const InputDecoration(
+                                                labelText: 'Status'),
+                                            readOnly: true,
+                                          ),
                                         ],
                                       ))),
                               const SizedBox(height: 20),
@@ -269,6 +292,14 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                         Expanded(
                                             child: ElevatedButton(
                                           onPressed: () {
+                                            finaldb.set({
+                                              'Report Title': title.text,
+                                              'File':
+                                                  _fileNameController.text,
+                                              'Drive Link': drive.text,
+                                              'Date': dateinput.text,
+                                              'Status': _statusController.text,
+                                            });
                                             goUpload();
                                           },
                                           style: ElevatedButton.styleFrom(
@@ -277,33 +308,13 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                                                       148, 112, 18, 1),
                                               minimumSize:
                                                   const Size.fromHeight(50)),
-                                          child: const Text('Save'),
+                                          child: const Text(
+                                            'Submit',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ))
                                       ])),
-
-                              //ROUNDED BUTTON
-                              /*Container(
-                                      padding: const EdgeInsets.all(10),
-                                      margin: const EdgeInsets.only(top: 10),
-                                      alignment: Alignment.bottomRight,
-                                      child: Expanded(
-                                          child: ElevatedButton(
-                                              onPressed: () {
-                                                navigateBackWithData();
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    const Color.fromRGBO(
-                                                        148, 112, 18, 1),
-                                                minimumSize:
-                                                    const Size.fromHeight(50),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          100),
-                                                ),
-                                              ),
-                                              child: const Text("Save")))),*/
                             ]))))));
   }
 }
