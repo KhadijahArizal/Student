@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -18,12 +19,10 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
   late TextEditingController _fileNameController;
   late TextEditingController _statusController;
   late TextEditingController _monthController;
-  String _submissionDate = "";
-  String formatSubmissionDate() {
-    DateTime parsedDate = DateTime.parse(_submissionDate);
-    String formattedDate = DateFormat('dd MMMM yyyy').format(parsedDate);
-    return formattedDate;
-  }
+  late TextEditingController _submitController;
+
+  //RealtimeDatabase
+  final monthlydb = FirebaseDatabase.instance.ref('Monthly Report');
 
   @override
   void initState() {
@@ -35,15 +34,13 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
     _monthController = TextEditingController(
       text: DateFormat('MMMM').format(DateTime.now()),
     );
-    if (widget.editReport != null) {
-      _submissionDate = widget.editReport!.submissionDate!;
-    } else {
-      _submissionDate = DateTime.now().toString();
-    }
+    _submitController = TextEditingController(
+        text: DateFormat('dd MMMM yyyy').format(DateTime.now()));
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
@@ -121,7 +118,7 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
                 TextFormField(
                   controller: _statusController,
                   decoration: const InputDecoration(labelText: 'Status'),
-                  readOnly: true, // Status is automatically set
+                  readOnly: true,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -130,14 +127,11 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
                   readOnly: true,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Submission Date',
-                  style: TextStyle(color: Colors.black87, fontSize: 13),
-                ),
-                Text(
-                  formatSubmissionDate(),
-                  style: const TextStyle(
-                      color: Color.fromRGBO(148, 112, 18, 1), fontSize: 15),
+                TextFormField(
+                  controller: _submitController,
+                  decoration:
+                      const InputDecoration(labelText: 'Submission Date'),
+                  readOnly: true,
                 ),
                 const SizedBox(height: 16),
                 Column(children: [
@@ -168,15 +162,23 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
                     alignment: Alignment.bottomCenter,
                     child: ElevatedButton(
                       onPressed: () {
+                        monthlydb.push().set({
+                          'Name': _fileNameController.text,
+                          'Month': _monthController.text,
+                          'Submission Date': _submitController.text,
+                          'Status': _statusController.text,
+                        });
                         _saveReport();
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(50),
                         backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
                       ),
-                      child: Text(widget.editReport == null
-                          ? 'Submit Report'
-                          : 'Update Report'),
+                      child: Text(
+                          widget.editReport == null
+                              ? 'Submit Report'
+                              : 'Update Report',
+                          style: const TextStyle(color: Colors.white)),
                     ),
                   ),
                 ]),
@@ -226,7 +228,7 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
       print('File Name: ${_fileNameController.text}');
       print('Status: ${_statusController.text}');
       print('Month: ${_monthController.text}');
-      print('Submission Date: $_submissionDate');
+      print('Submission Date: ${_submitController.text}');
 
       Navigator.pop(
         context,
@@ -234,8 +236,9 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
           fileName: _fileNameController.text,
           status: _statusController.text,
           month: _monthController.text,
-          submissionDate: _submissionDate,
+          submissionDate: _submitController.text,
           reportType: ReportType.create,
+          onCalculateStatus: (int approved, int pending, int rejected) {},
         ),
       );
     }
