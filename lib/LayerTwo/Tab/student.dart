@@ -9,15 +9,10 @@ class Student extends StatefulWidget {
       this.address,
       this.ic,
       this.citizenship,
-      this.major})
+      this.major, this.initialMatric})
       : super(key: key);
 
-  final String? name;
-  final String? contact;
-  final String? address;
-  final String? ic;
-  final String? citizenship;
-  final String? major;
+  final String? name, contact, address, ic, citizenship, major, initialMatric;
 
   @override
   _studentState createState() => _studentState();
@@ -26,6 +21,8 @@ class Student extends StatefulWidget {
 class _studentState extends State<Student> {
   late TextEditingController name =
       TextEditingController(text: widget.name ?? '-');
+  late TextEditingController matric =
+      TextEditingController(text: widget.initialMatric ?? '-');
   late TextEditingController contact =
       TextEditingController(text: widget.contact ?? '-');
   late TextEditingController address =
@@ -38,6 +35,7 @@ class _studentState extends State<Student> {
   void initState() {
     super.initState();
     name = TextEditingController(text: widget.name ?? '-');
+    matric = TextEditingController(text: widget.initialMatric ?? '-');
     contact = TextEditingController(text: widget.contact ?? '-');
     address = TextEditingController(text: widget.address ?? '-');
     ic = TextEditingController(text: widget.ic ?? '-');
@@ -78,17 +76,6 @@ class _studentState extends State<Student> {
     );
   }
 
-  Widget _email({required String email}) => Container(
-        child: Column(
-          children: [
-            Text(
-              email,
-              style: const TextStyle(color: Colors.black87, fontSize: 15),
-            )
-          ],
-        ),
-      );
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -101,7 +88,8 @@ class _studentState extends State<Student> {
             const SizedBox(height: 20),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               _buildDetail('Name', name.text),
-              _buildDetail2('Matric No', 'generate from IAP form')
+              _buildDetail2('Matric No', matric.text),
+              _buildDetail2('Matric No','${widget.initialMatric}')
             ]),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               _buildDetail('Email', 'generate from login'),
@@ -125,14 +113,13 @@ class _studentState extends State<Student> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => studentForm(
-                        initialBr: dropDownValueBr,
-                        initialName: name.text,
-                        initialContact: contact.text,
-                        initialAddress: address.text,
-                        initialIc: ic.text,
-                        initialCitizenship: citizenship.text,
-                        initialMajor: dropdownValueMajor,
-                      ),
+                          initialBr: dropDownValueBr,
+                          initialName: name.text,
+                          initialContact: contact.text,
+                          initialAddress: address.text,
+                          initialIc: ic.text,
+                          initialCitizenship: citizenship.text,
+                          initialMajor: dropdownValueMajor, matric: '',),
                     ),
                   );
 
@@ -141,6 +128,7 @@ class _studentState extends State<Student> {
                       print('Result: $result');
                       dropDownValueBr = result['br'] ?? '-';
                       name.text = result['name'] ?? '-';
+                      matric.text = result['matric'] ?? '-';
                       contact.text = result['contact'] ?? '-';
                       address.text = result['address'] ?? '-';
                       ic.text = result['ic'] ?? '-';
@@ -153,9 +141,10 @@ class _studentState extends State<Student> {
                   backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
                   minimumSize: const Size.fromHeight(50),
                 ),
-                icon: const Icon(
-                    Icons.edit_rounded), // Icon data for elevated button
-                label: const Text("Edit"),
+                icon: const Icon(Icons.edit_rounded,
+                    color: Colors.white), // Icon data for elevated button
+                label:
+                    const Text("Edit", style: TextStyle(color: Colors.white)),
               ))
             ])),
           ],
