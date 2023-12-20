@@ -1,8 +1,9 @@
 import 'dart:async';
 
 class StatusManagement {
-  String _studentStatus = 'Inactive'; // Initialize to 'Inactive'
-  final StreamController<String> _statusController = StreamController<String>.broadcast();
+  String _studentStatus = 'Active'; // Initialize to 'Inactive'
+  final StreamController<String> _statusController =
+      StreamController<String>.broadcast();
 
   StatusManagement() {
     _fetchStudentStatus();
@@ -16,7 +17,7 @@ class StatusManagement {
     if (_studentStatus == false) {
       _studentStatus = 'Active';
     }
-    
+
     _statusController.add(_studentStatus);
   }
 
