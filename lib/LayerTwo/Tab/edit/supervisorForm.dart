@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -7,31 +8,37 @@ class SupervisorForm extends StatefulWidget {
     this.initialSupervisor,
     this.initialEmail,
     this.initialContact,
+    required this.onSupervisorChanged,
   }) : super(key: key);
 
   final String? initialSupervisor, initialEmail, initialContact;
-
+  final Function(String newSupervisor, String newEmail) onSupervisorChanged;
   @override
   _SupervisorFormState createState() => _SupervisorFormState();
 }
 
 class _SupervisorFormState extends State<SupervisorForm> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController supervisor = TextEditingController();
-  final TextEditingController email = TextEditingController();
+  final supervisor = TextEditingController();
+  late TextEditingController email = TextEditingController();
   final TextEditingController contact = TextEditingController();
+  late DatabaseReference supervisordb;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialSupervisor != null) {
+    supervisordb = FirebaseDatabase.instance.ref('Supervisor Details');
       supervisor.text = widget.initialSupervisor ?? '-';
       email.text = widget.initialEmail ?? '-';
       contact.text = widget.initialContact ?? '-';
-    }
+    
   }
 
   void goSupervisor() {
+    widget.onSupervisorChanged(
+      supervisor.text, //'${widget.initialSupervisor}',
+      email.text,
+    );
     Navigator.pop(context, {
       'supervisor': supervisor.text,
       'email': email.text,
@@ -167,13 +174,18 @@ class _SupervisorFormState extends State<SupervisorForm> {
                                   Expanded(
                                       child: ElevatedButton(
                                     onPressed: () {
+                                      supervisordb.set({
+                                        'supervisor': supervisor.text,
+                                        'Email':email.text,
+                                        'Contact No': contact.text
+                                      });
                                       goSupervisor();
                                     },
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color.fromRGBO(
                                             148, 112, 18, 1),
                                         minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save'),
+                                    child: const Text('Save',style: TextStyle(color: Colors.white)),
                                   ))
                                 ]))
                       ]),
