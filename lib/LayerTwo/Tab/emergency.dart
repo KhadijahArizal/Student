@@ -96,8 +96,8 @@ class _EmergencyState extends State<Emergency> {
                         minimumSize: const Size.fromHeight(50),
                       ),
                       icon: const Icon(
-                          Icons.edit_rounded), // Icon data for elevated button
-                      label: const Text("Edit"),
+                          Icons.edit_rounded,color: Colors.white), // Icon data for elevated button
+                      label: const Text("Edit",style: TextStyle(color: Colors.white)),
                     ))
                   ])),
             ])));
