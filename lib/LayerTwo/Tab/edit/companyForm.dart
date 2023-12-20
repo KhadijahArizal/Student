@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'zone_list.dart';
@@ -8,6 +10,7 @@ class CompanyForm extends StatefulWidget {
   const CompanyForm(
       {Key? key,
       this.initialCompany,
+      this.initialLetter,
       this.initialIndustry,
       this.initialSector,
       this.initialZone,
@@ -22,6 +25,7 @@ class CompanyForm extends StatefulWidget {
 
   final String? initialCompany,
       initialIndustry,
+      initialLetter,
       initialSector,
       initialZone,
       initialAllowance,
@@ -77,7 +81,7 @@ const List<String> sector = <String>[
   'Private Households with Employeed Personel',
   'Territorial Organization and Bodies'
 ];
-List<String> industry = <String>[
+const List<String> industry = <String>[
   'Industry',
   'Irrelevant',
   'Not Stated',
@@ -90,7 +94,7 @@ List<String> industry = <String>[
   'NGO',
   'Others'
 ];
-final List<String> zones = [
+const List<String> zones = [
   'Zone A',
   'Zone B',
   'Zone C',
@@ -110,28 +114,32 @@ String dropDownValueIndustry = 'Industry';
 
 class _CompanyFormState extends State<CompanyForm> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController company = TextEditingController();
-  TextEditingController address = TextEditingController();
-  TextEditingController postcode = TextEditingController();
-  TextEditingController monthlyA = TextEditingController();
-  TextEditingController duration = TextEditingController();
-  TextEditingController start = TextEditingController();
-  TextEditingController end = TextEditingController();
+  final company = TextEditingController();
+  final postcode = TextEditingController();
+  final monthlyA = TextEditingController();
+  final duration = TextEditingController();
+  final start = TextEditingController();
+  final end = TextEditingController();
   DateTime selectedDate = DateTime.now();
-
   DateTime? startDate;
   DateTime? endDate;
+  late TextEditingController _offerletter;
+  late TextEditingController address ;
+  late DatabaseReference companydb;
 
   @override
   void initState() {
     super.initState();
+    companydb = FirebaseDatabase.instance.ref('Company Details');
+    
     if (widget.initialCompany != null) {
-      company.text = widget.initialCompany ?? '-';
+      company.text = widget.initialCompany ?? '${widget.initialCompany}';
+      _offerletter = TextEditingController(text: "-");
       dropDownValueIndustry = widget.initialIndustry!;
       dropDownValueSector = widget.initialSector!;
       dropDownValueZone = widget.initialZone!;
-      address.text = widget.initialAddress ?? '-';
-      postcode.text = widget.initialPostcode ?? '-';
+      address = TextEditingController(text: '${widget.initialAddress}');
+      postcode.text = widget.initialPostcode!;
       monthlyA.text = widget.initialAllowance ?? '-';
       start.text = widget.initialStart ?? '-';
       end.text = widget.initialEnd ?? '-';
@@ -142,6 +150,7 @@ class _CompanyFormState extends State<CompanyForm> {
   void goCompany() {
     Navigator.pop(context, {
       'company': company.text,
+      'letter': _offerletter.text,
       'industry': dropDownValueIndustry,
       'sector': dropDownValueSector,
       'zone': dropDownValueZone,
@@ -229,6 +238,52 @@ class _CompanyFormState extends State<CompanyForm> {
                                       labelText: 'Company',
                                     ),
                                   ),
+                                  const SizedBox(height: 20),
+                                  Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Offer Letter',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 15,
+                                                    fontFamily: 'Futura'),
+                                                textAlign: TextAlign.left,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              ElevatedButton(
+                                                  onPressed: _pickFile,
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color.fromRGBO(
+                                                            148, 112, 18, 1),
+                                                  ),
+                                                  child: const Text(
+                                                    'Attach File',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontFamily: 'Futura'),
+                                                  )),
+                                            ]),
+                                        const SizedBox(height: 7),
+                                        Text(
+                                          _offerletter.text.isNotEmpty
+                                              ? 'Selected File: ${_offerletter.text}'
+                                              : '',
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontFamily: 'Futura',
+                                          ),
+                                        ),
+                                      ]),
                                   const SizedBox(height: 20),
                                   Container(
                                     padding: const EdgeInsets.only(
@@ -615,17 +670,47 @@ class _CompanyFormState extends State<CompanyForm> {
                           Expanded(
                               child: ElevatedButton(
                             onPressed: () {
+                              companydb.set({
+                                'Company Name': company.text,
+                                'Offer Letter': _offerletter.text,
+                                'Industry': dropDownValueIndustry,
+                                'Sector': dropDownValueSector,
+                                'Zone': dropDownValueZone,
+                                'Address': address.text,
+                                'Postcode': postcode.text,
+                                'Monthly Allowance': monthlyA.text,
+                                'Start Date': start.text,
+                                'End Date': end.text,
+                              });
                               goCompany();
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                     const Color.fromRGBO(148, 112, 18, 1),
                                 minimumSize: const Size.fromHeight(50)),
-                            child: const Text('Save'),
+                            child: const Text('Save',
+                                style: TextStyle(color: Colors.white)),
                           ))
                         ]))
                       ]),
                 )))));
+  }
+
+  void _pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null && result.files.isNotEmpty) {
+        PlatformFile file = result.files.first;
+        print('Selected file: ${file.name}');
+
+        setState(() {
+          _offerletter.text = result.files.first.name;
+        });
+      }
+    } catch (e) {
+      print('Error picking a file: $e');
+    }
   }
 
   void showMoney(BuildContext context) {
@@ -684,7 +769,7 @@ class _CompanyFormState extends State<CompanyForm> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: const Text('OK', style: TextStyle(color: Colors.black87)),
             ),
           ],
         );
@@ -749,14 +834,15 @@ class _CompanyFormState extends State<CompanyForm> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Text('Error',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('OK'),
+              child: const Text('OK', style: TextStyle(color: Colors.black87)),
             ),
           ],
         );
