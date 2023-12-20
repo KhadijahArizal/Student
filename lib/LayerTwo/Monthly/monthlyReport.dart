@@ -25,6 +25,7 @@ class MonthlyReport extends StatefulWidget {
     this.submissionDate,
     this.status,
     required this.reportType,
+    required this.onCalculateStatus,
   })  : statusColor = _getStatusColor(status),
         super(key: key);
 
@@ -34,7 +35,8 @@ class MonthlyReport extends StatefulWidget {
         return Colors.yellow[800]!;
       case 'Approved':
         return Colors.green[700]!;
-      // Add more cases for other status values if needed
+      case 'Rejected':
+        return Colors.red[700]!;
       default:
         return Colors.black87; // Default color
     }
@@ -43,6 +45,8 @@ class MonthlyReport extends StatefulWidget {
   final String? fileName, createdDate, month, submissionDate, status;
   final ReportType reportType;
   final Color statusColor;
+  final void Function(int approved, int pending, int rejected)
+      onCalculateStatus;
 
   @override
   _MonthlyReportState createState() => _MonthlyReportState();
@@ -50,6 +54,7 @@ class MonthlyReport extends StatefulWidget {
 
 class _MonthlyReportState extends State<MonthlyReport> {
   List<MonthlyReport> reports = [];
+  late StatusManagement _statusManagement;
   PlatformFile? file;
   String _formatDate(String? date) {
     if (date != null && date.isNotEmpty) {
@@ -70,6 +75,16 @@ class _MonthlyReportState extends State<MonthlyReport> {
       TextEditingController(text: widget.submissionDate ?? '-');
   late TextEditingController status =
       TextEditingController(text: widget.status ?? '-');
+
+  void _calculateStatus() {
+    int approvedCount =
+        reports.where((report) => report.status == 'Approved').length;
+    int pendingCount =
+        reports.where((report) => report.status == 'Pending').length;
+    int rejectedCount =
+        reports.where((report) => report.status == 'Rejected').length;
+    widget.onCalculateStatus(approvedCount, pendingCount, rejectedCount);
+  }
 
   Widget _examiner({required String examiner}) => Container(
         alignment: Alignment.topLeft,
@@ -185,9 +200,9 @@ class _MonthlyReportState extends State<MonthlyReport> {
       _currentIndex = index;
       if (index == 0) {
         Navigator.pushNamed(context, '/summary');
-      } else if (index == 1) {
+      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2) {
+      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
       } else if (index == 3) {
         Navigator.pushNamed(context, '/details');
@@ -198,8 +213,15 @@ class _MonthlyReportState extends State<MonthlyReport> {
   }
 
   @override
+  void dispose() {
+    _statusManagement.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
+    _statusManagement = StatusManagement();
     fileName = TextEditingController(text: widget.fileName ?? '-');
     createdDate = TextEditingController(text: widget.createdDate ?? '-');
     month = TextEditingController(text: widget.month ?? '-');
@@ -374,7 +396,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
                               ),
                               DataCell(Text(report.month ?? '-')),
                               DataCell(
-                                  Text(_formatDate(report.submissionDate))),
+                                  Text(report.submissionDate ?? '-')),
                               DataCell(Text(
                                 report.status ?? '-',
                                 style: TextStyle(
@@ -385,7 +407,6 @@ class _MonthlyReportState extends State<MonthlyReport> {
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () {
-                                    // Open the AddReportPage with the current report data for editing
                                     _editReport(report);
                                   },
                                 ),
@@ -412,9 +433,10 @@ class _MonthlyReportState extends State<MonthlyReport> {
                         ),
                       ),
                       icon: const Icon(
-                          Icons.add_circle), // Icon data for elevated button
+                          Icons.add_circle,
+                          color: Colors.white), // Icon data for elevated button
                       label: const Text(
-                          "New Report"), // Label text for elevated button
+                          "New Report", style: TextStyle(color: Colors.white),), // Label text for elevated button
                     ),
                   ),
                 ],
@@ -433,6 +455,7 @@ class _MonthlyReportState extends State<MonthlyReport> {
           'Details': '/details',
           'Placements': '/placements',
         },
+        studentStatus: _statusManagement.studentStatus,
       ),
     );
   }
@@ -491,61 +514,63 @@ class _MonthlyReportState extends State<MonthlyReport> {
   }
 
   void _showNewReportDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add Submission'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Attach(
-                attach: 'Attach File',
-                onTap: () async {
-                  // Open the AttachFileDetailsPage and wait for a result
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AttachFileDetailsPage(
-                          reportType: ReportType.file),
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Colors.white, // Set the background color to white
+        title: const Text('Add Submission'),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Attach(
+              attach: 'Attach File',
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AttachFileDetailsPage(
+                      reportType: ReportType.file,
                     ),
-                  );
+                  ),
+                );
 
-                  // Check if a new report is added
-                  if (result != null && result is MonthlyReport) {
-                    setState(() {
-                      // Add the new report to the list
-                      reports.add(result);
-                    });
-                  }
-                },
-              ),
-              _Write(
-                write: 'Create Report',
-                onTap: () async {
-                  // Open the CreateReportPage and wait for a result
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CreateReportPage(reportType: ReportType.create),
+                // Check if a new report is added
+                if (result != null && result is MonthlyReport) {
+                  setState(() {
+                    reports.add(result);
+                  });
+                }
+              },
+            ),
+            _Write(
+              write: 'Create Report',
+              onTap: () async {
+                // Open the CreateReportPage and wait for a result
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreateReportPage(
+                      reportType: ReportType.create,
                     ),
-                  );
+                  ),
+                );
 
-                  // Check if a new report is added
-                  if (result != null && result is MonthlyReport) {
-                    setState(() {
-                      // Add the new report to the list
-                      reports.add(result);
-                    });
-                  }
-                },
-              ),
-              _Snap(snap: 'Snap a Picture'),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                // Check if a new report is added
+                if (result != null && result is MonthlyReport) {
+                  setState(() {
+                    // Add the new report to the list
+                    reports.add(result);
+                  });
+                }
+              },
+            ),
+            _Snap(snap: 'Snap a Picture'),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 }
