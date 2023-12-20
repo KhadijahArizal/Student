@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 class EmergencyForm extends StatefulWidget {
@@ -24,10 +25,12 @@ class _EmergencyFormState extends State<EmergencyForm> {
   TextEditingController relationship = TextEditingController();
   TextEditingController econtact = TextEditingController();
   TextEditingController eaddress = TextEditingController();
+  late DatabaseReference emergencydb;
 
   @override
   void initState() {
     super.initState();
+    emergencydb = FirebaseDatabase.instance.ref('Emergency Details');
     if (widget.initialEname != null) {
       ename.text = widget.initialEname!;
       relationship.text = widget.initialRelationship ?? '';
@@ -193,13 +196,19 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   Expanded(
                                       child: ElevatedButton(
                                     onPressed: () {
+                                      emergencydb.set({
+                                'Emergency Contact Name': ename.text,
+                                'Relationship': relationship.text,
+                                'Contact No': econtact.text,
+                                'Home Address': eaddress.text,
+                              });
                                       GoEmergency();
                                     },
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color.fromRGBO(
                                             148, 112, 18, 1),
                                         minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save'),
+                                    child: const Text('Save',style: TextStyle(color: Colors.white)),
                                   ))
                                 ]))
                       ]),
