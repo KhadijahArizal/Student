@@ -277,8 +277,8 @@ class _CoverLetterState extends State<CoverLetter> {
                                       const Color.fromRGBO(148, 112, 18, 1),
                                   minimumSize: const Size.fromHeight(50)),
                               icon: const Icon(
-                                  Icons.email), //icon data for elevated button
-                              label: const Text("Request"), //label text
+                                  Icons.email, color: Colors.white), //icon data for elevated button
+                              label: const Text("Request", style: TextStyle(color: Colors.white),), //label text
                             ))
                       ])))),
         ));
