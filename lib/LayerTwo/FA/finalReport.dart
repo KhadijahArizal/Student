@@ -7,13 +7,23 @@ import '../Detect Status/statusManagament.dart';
 
 class FinalReport extends StatefulWidget {
   const FinalReport({
-    required this.title,
-    required this.drive,
-    required this.date,
+    super.key,
+    this.title,
+    this.drive,
+    this.date,
+    this.fileName,
+    this.status,
+    this.supervisor,
+    this.supervisorEmail,
   });
-  final String title;
-  final String drive;
-  final String date;
+
+  final String? title,
+      drive,
+      date,
+      fileName,
+      status,
+      supervisor,
+      supervisorEmail;
 
   @override
   _FinalReportState createState() => _FinalReportState();
@@ -21,9 +31,17 @@ class FinalReport extends StatefulWidget {
 
 class _FinalReportState extends State<FinalReport> {
   final StatusManagement statusManager = StatusManagement();
-  TextEditingController title = TextEditingController();
-  TextEditingController drive = TextEditingController();
-  TextEditingController date = TextEditingController();
+  late StatusManagement _statusManagement;
+  late TextEditingController title =
+      TextEditingController(text: widget.title ?? '-');
+  late TextEditingController drive =
+      TextEditingController(text: widget.drive ?? '-');
+  late TextEditingController date =
+      TextEditingController(text: widget.date ?? '-');
+  late TextEditingController fileName =
+      TextEditingController(text: widget.fileName ?? '-');
+  late TextEditingController status =
+      TextEditingController(text: widget.status ?? '-');
 
   Widget _report({required String report}) => Container(
         child: Column(
@@ -39,20 +57,17 @@ class _FinalReportState extends State<FinalReport> {
         ),
       );
 
-  Widget _status({required String status}) => Container(
-        child: Column(
-          children: [
-            Text(
-              status,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 16,
-                fontFamily: 'Futura',
-              ),
-            )
-          ],
-        ),
-      );
+  Widget _status({required String status}) {
+    return Column(
+      children: [
+        Text(
+          status,
+          style:
+              TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
+        )
+      ],
+    );
+  }
 
   Widget _link({required String link}) => Container(
         child: Column(
@@ -133,9 +148,9 @@ class _FinalReportState extends State<FinalReport> {
       _currentIndex = index;
       if (index == 0) {
         Navigator.pushNamed(context, '/summary');
-      } else if (index == 1) {
+      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2) {
+      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
       } else if (index == 3) {
         Navigator.pushNamed(context, '/details');
@@ -146,11 +161,20 @@ class _FinalReportState extends State<FinalReport> {
   }
 
   @override
+  void dispose() {
+    _statusManagement.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
-    title.text = widget.title;
-    drive.text = widget.drive;
-    date.text = widget.date;
+    _statusManagement = StatusManagement();
+    title = TextEditingController(text: widget.title ?? '-');
+    drive = TextEditingController(text: widget.drive ?? '-');
+    date = TextEditingController(text: widget.date ?? '-');
+    fileName = TextEditingController(text: widget.fileName ?? '-');
+    status = TextEditingController(text: widget.status ?? '-');
   }
 
   @override
@@ -240,7 +264,7 @@ class _FinalReportState extends State<FinalReport> {
                                                 style: TextStyle(
                                                     fontSize: 13,
                                                     color: Colors.black54)),
-                                            _status(status: '-'),
+                                            _status(status: status.text),
                                           ],
                                         ),
                                       ],
@@ -258,7 +282,16 @@ class _FinalReportState extends State<FinalReport> {
                                             style: TextStyle(
                                                 fontSize: 13,
                                                 color: Colors.black54)),
-                                        _link(link: drive.text),
+                                        _link(
+                                            link: fileName.text !=
+                                                    'No link Inserted'
+                                                ? drive.text
+                                                : drive.text),
+                                        _link(
+                                            link: fileName.text !=
+                                                    'No file Selected'
+                                                ? fileName.text
+                                                : drive.text)
                                       ],
                                     ),
                                   ]),
@@ -462,9 +495,7 @@ class _FinalReportState extends State<FinalReport> {
                                                         color: Colors.black54,
                                                       ),
                                                     ),
-                                                    _supervisor(
-                                                        supervisor:
-                                                            'Fatni Mufit'),
+                                                    _supervisor(supervisor: '${widget.supervisor}'),
                                                   ],
                                                 ),
                                               ],
@@ -507,8 +538,7 @@ class _FinalReportState extends State<FinalReport> {
                                                     color: Colors.black54,
                                                   ),
                                                 ),
-                                                _email(
-                                                    email: 'fatni@gmail.com'),
+                                                _email(email: widget.supervisorEmail ?? 'No supervisor email'),
                                               ],
                                             ),
                                           ],
@@ -531,20 +561,27 @@ class _FinalReportState extends State<FinalReport> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  const FinalReportUpload(),
+                                                  FinalReportUpload(
+                                                initialTitle: title.text,
+                                                initialDrive: drive.text,
+                                                initialDate: date.text,
+                                                initialStatus: widget.status,
+                                              ),
                                             ),
                                           );
 
-                                          // Check if data is not null
                                           if (result != null) {
                                             setState(() {
                                               print(
                                                   'Result from FinalReportUpload: $result');
+                                              fileName.text =
+                                                  result['fileName'] ?? '-';
                                               title.text =
                                                   result['title'] ?? '-';
                                               drive.text =
                                                   result['drive'] ?? '-';
                                               date.text = result['date'] ?? '-';
+                                              status.text = 'Submitted';
                                             });
                                           }
                                         },
@@ -553,47 +590,13 @@ class _FinalReportState extends State<FinalReport> {
                                               148, 112, 18, 1),
                                           minimumSize:
                                               const Size.fromHeight(50),
-                                          
                                         ),
-                                        child: const Text('Edit'),
+                                        child: const Text(
+                                          'Edit',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ))
                                     ])),
-
-                            /*Container(
-                                margin: const EdgeInsets.only(top: 10),
-                                alignment: Alignment.bottomRight,
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const FinalReportUpload(),
-                                      ),
-                                    );
-
-                                    // Check if data is not null
-                                    if (result != null) {
-                                      setState(() {
-                                        print('Result from FinalReportUpload: $result');
-                                        title.text = result['title'] ?? '-';
-                                        drive.text = result['drive'] ?? '-';
-                                        date.text = result['date'] ?? '-';
-                                      });
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        const Color.fromRGBO(148, 112, 18, 1),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          100), // Set the border radius to 100
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons
-                                      .edit_rounded), // Icon data for elevated button
-                                  label: const Text("edit"), // Label text
-                                )),*/
                           ]))))),
       bottomNavigationBar: BottomMenu(
         currentIndex: _currentIndex,
@@ -605,6 +608,7 @@ class _FinalReportState extends State<FinalReport> {
           'Details': '/details',
           'Placements': '/placements',
         },
+        studentStatus: _statusManagement.studentStatus,
       ),
     );
   }
