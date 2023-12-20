@@ -11,11 +11,6 @@ void main() => runApp(const MaterialApp(
     ));
 
 class Placements extends StatefulWidget {
-  final String companyName;
-  final String companyAddress;
-  final String companyPostcode;
-  final String monthlyAllowance;
-
   const Placements({
     Key? key,
     required String title,
@@ -25,6 +20,8 @@ class Placements extends StatefulWidget {
     required this.monthlyAllowance,
   }) : super(key: key);
 
+  final String companyName, companyAddress, companyPostcode, monthlyAllowance;
+
   @override
   // ignore: library_private_types_in_public_api
   _PlacementsState createState() => _PlacementsState();
@@ -32,8 +29,13 @@ class Placements extends StatefulWidget {
 
 class _PlacementsState extends State<Placements>
     with SingleTickerProviderStateMixin {
+  final TextEditingController _supervisor = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _contact = TextEditingController();
+  late String _companyName;
   final StatusManagement statusManager = StatusManagement();
   late TabController tabController;
+  late StatusManagement _statusManagement;
 
   Widget _cname({required String cname}) => Container(
         alignment: Alignment.center,
@@ -50,19 +52,18 @@ class _PlacementsState extends State<Placements>
 
   @override
   void initState() {
-    tabController = TabController(length: 2, vsync: this);
     super.initState();
+    _companyName = widget.companyName;
+    _statusManagement = StatusManagement();
+    tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
+    _statusManagement.dispose();
     tabController.dispose();
     super.dispose();
   }
-
-  final TextEditingController _supervisor = TextEditingController();
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _contact = TextEditingController();
 
   int _currentIndex = 4;
 
@@ -71,9 +72,9 @@ class _PlacementsState extends State<Placements>
       _currentIndex = index;
       if (index == 0) {
         Navigator.pushNamed(context, '/summary');
-      } else if (index == 1) {
+      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2) {
+      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
       } else if (index == 3) {
         Navigator.pushNamed(context, '/details');
@@ -88,21 +89,22 @@ class _PlacementsState extends State<Placements>
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
-          title: const Text(
-            'Placements',
-            style: TextStyle(
-                color: Colors.black87,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Futura'),
-          ),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle.dark,
-          iconTheme: const IconThemeData(
-            color: Color.fromRGBO(148, 112, 18, 1),
-            size: 30,
-          ), leading: Builder(
+        title: const Text(
+          'Placements',
+          style: TextStyle(
+              color: Colors.black87,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura'),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        iconTheme: const IconThemeData(
+          color: Color.fromRGBO(148, 112, 18, 1),
+          size: 30,
+        ),
+        leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.sort,
@@ -112,7 +114,8 @@ class _PlacementsState extends State<Placements>
               },
             );
           },
-        ),),
+        ),
+      ),
       drawer: sideNav2(studentStatus: statusManager.studentStatus),
       body: SafeArea(
           child: Container(
@@ -176,12 +179,8 @@ class _PlacementsState extends State<Placements>
                                                   ),
                                                   const SizedBox(height: 10),
                                                   _cname(
-                                                      cname: _email
-                                                          .text), //COBA-COBA
+                                                      cname: _companyName), //COBA-COBA
                                                 ]),
-                                          ),
-                                          const Divider(
-                                            color: Colors.white,
                                           ),
                                           const SizedBox(height: 5),
                                           DefaultTabController(
@@ -192,7 +191,9 @@ class _PlacementsState extends State<Placements>
                                               labelColor: const Color.fromRGBO(
                                                   148, 112, 18, 1),
                                               indicatorColor: Colors.white,
-                                              indicatorWeight: 2,
+                                              indicatorWeight: 0.0,
+                                              indicatorSize:
+                                                  TabBarIndicatorSize.tab,
                                               indicator: BoxDecoration(
                                                 borderRadius:
                                                     BorderRadius.circular(5),
@@ -216,11 +217,15 @@ class _PlacementsState extends State<Placements>
                                         child: TabBarView(
                                           controller: tabController,
                                           children: [
-                                            Company(),
+                                            const Company(),
                                             Supervisor(
-                                                supervisor: _supervisor.text,
-                                                email: _email.text,
-                                                contact: _contact.text)
+                                              onSupervisorChanged:
+                                                  (String supervisor,
+                                                      String email) {
+                                                supervisor;
+                                                email;
+                                              },
+                                            )
                                           ],
                                         ),
                                       )
@@ -240,8 +245,8 @@ class _PlacementsState extends State<Placements>
           'Details': '/details',
           'Placements': '/placements',
         },
+        studentStatus: _statusManagement.studentStatus,
       ),
-
     );
   }
 }
