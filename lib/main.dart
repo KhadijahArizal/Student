@@ -1,13 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:student/LayerTwo/LIDV/lidv.dart';
 import 'package:student/LayerTwo/details.dart';
 import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
 import 'package:student/LayerTwo/placements.dart';
 import 'package:student/LayerTwo/summary.dart';
 import 'package:student/LayerTwo/FA/finalReport.dart';
 import 'package:student/SignIn/SignIn.dart';
+import 'package:student/SignIn/auth.dart';
 import 'package:student/layerOne/adminReview.dart';
 import 'package:student/layerOne/iapForm.dart';
 import 'package:student/layerOne/logo.dart';
@@ -16,22 +15,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-    apiKey: 'AIzaSyBdoySdRPIPjSgZWmfgCto5LrRrhBWAwIU',
-    appId: '1:138224128805:android:01dbc8e391aa2f45c6c0cc',
-    messagingSenderId: '138224128805',
-    projectId: 'ikict-student-f4e2e',
-    databaseURL: 'https://ikict-student-f4e2e-default-rtdb.firebaseio.com/',
-    storageBucket: "gs://ikict-student-f4e2e.appspot.com",
-    authDomain: 'ikict-student-f4e2e.firebaseapp.com.',
-  ));
-
-  /*GoogleSignIn googleSignIn = GoogleSignIn(
-    clientId:
-        '138224128805-kgkkaeis97d6t1qhaqus4eb9lpqpvt5s.apps.googleusercontent.com',
-  );
-  // For silent sign-in (check if the user is already signed in)
-  GoogleSignInAccount? account = googleSignIn.currentUser;
-  account ??= await googleSignIn.signIn();*/
+          apiKey: "AIzaSyDW17txVZK6rztMZDkUbxdKm2dPg1RysCI",
+          authDomain: "ikict-f49f6.firebaseapp.com",
+          databaseURL: "https://ikict-f49f6-default-rtdb.firebaseio.com",
+          projectId: "ikict-f49f6",
+          storageBucket: "ikict-f49f6.appspot.com",
+          messagingSenderId: "753383357173",
+          appId: "1:753383357173:web:cb41d4980a59f94e9fe3bc",
+          measurementId: "G-VZHRYCDNRT"));
 
   runApp(MyApp());
 }
@@ -43,12 +34,13 @@ class MyApp extends StatelessWidget {
       title: 'iKICT | Student',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color.fromRGBO(148, 112, 18, 1),
+        primaryColor: Colors.teal.shade900,
         fontFamily: 'Futura',
       ),
-      initialRoute: '/splash',
+      initialRoute: '/auth',
       routes: {
-        '/splash': (context) => SplashScreen(),
+        '/auth': (context) => const AuthPage(),
+        //'/splash': (context) => SplashScreen(),
         '/signIn': (context) => const SignIn(),
         '/adminreview': (context) => const AdminReviewPage(
               name: '',
@@ -61,8 +53,6 @@ class MyApp extends StatelessWidget {
               approvedCount: 0,
               pendingCount: 0,
               rejectedCount: 0,
-              dname: '',
-              demail: '',
               dmatric: '',
             ),
         '/monthly_report': (context) => MonthlyReport(
@@ -74,16 +64,10 @@ class MyApp extends StatelessWidget {
               drive: '',
               date: '',
             ),
-        '/lidv': (context) => const LIDV(
-              title: 'LIDV',
-            ),
         '/details': (context) => const Details(),
         '/placements': (context) => const Placements(
               title: 'Placements',
               companyName: '',
-              companyAddress: '',
-              companyPostcode: '',
-              monthlyAllowance: '',
             ),
         '/iap': (context) => IapForm(),
       },
