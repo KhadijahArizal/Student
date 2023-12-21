@@ -4,49 +4,51 @@ class BottomMenu extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final Map<String, String> routeNames;
+  final String studentStatus;
 
   BottomMenu({
     required this.currentIndex,
     required this.onTap,
     required this.routeNames,
+    required this.studentStatus,
   });
 
   @override
+   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      selectedItemColor: const Color.fromRGBO(148, 112, 18, 1),
+      selectedItemColor: Colors.teal.shade900,
       unselectedItemColor: Colors.grey,
-      items: routeNames.keys.map((routeName) {
-        final isSelected =
-            routeNames.keys.toList().indexOf(routeName) == currentIndex;
-        return BottomNavigationBarItem(
-          icon: Column(
-            children: [
-              InkWell(
-                onTap: () => onTap(routeNames.keys.toList().indexOf(routeName)),
-                child: Icon(
-                  getIconForRoute(routeName, isSelected),
-                  color: isSelected
-                      ? const Color.fromRGBO(148, 112, 18, 1)
-                      : Colors.grey,
-                ),
-              ),
-              if (isSelected) // Display the name only when selected
-                Text(
-                  routeName,
-                  style: TextStyle(
-                    color: isSelected
-                        ? const Color.fromRGBO(148, 112, 18, 1)
-                        : Colors.grey,
+      items: [
+        for (var routeName in routeNames.keys)
+          if (!((routeName == 'Monthly Report' || routeName == 'Final Report') &&
+              studentStatus == 'Inactive'))
+            BottomNavigationBarItem(
+              icon: Column(
+                children: [
+                  InkWell(
+                    onTap: () => onTap(routeNames.keys.toList().indexOf(routeName)),
+                    child: Icon(
+                      getIconForRoute(routeName, currentIndex == routeNames.keys.toList().indexOf(routeName)),
+                      color: currentIndex == routeNames.keys.toList().indexOf(routeName)
+                          ?  Colors.teal.shade900
+                          : Colors.grey,
+                    ),
                   ),
-                ),
-            ],
-          ),
-          label: '', // Clear the label
-        );
-      }).toList(),
+                  if (currentIndex == routeNames.keys.toList().indexOf(routeName)) // Display the name only when selected
+                    Text(
+                      routeName,
+                      style:  TextStyle(
+                        color:  Colors.teal.shade900,
+                      ),
+                    ),
+                ],
+              ),
+              label: '', // Clear the label
+            ),
+      ],
     );
   }
 
@@ -58,10 +60,6 @@ class BottomMenu extends StatelessWidget {
         return isSelected ? Icons.add_circle : Icons.add_circle;
       case 'Final Report':
         return isSelected ? Icons.assignment : Icons.assignment_outlined;
-      case 'Details':
-        return isSelected ? Icons.person : Icons.person_2_rounded;
-      case 'Placements':
-        return isSelected ? Icons.place : Icons.place_rounded;
       default:
         return isSelected ? Icons.dashboard : Icons.dashboard_rounded;
     }
