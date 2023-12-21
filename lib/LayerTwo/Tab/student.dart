@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
 
@@ -5,14 +6,23 @@ class Student extends StatefulWidget {
   const Student(
       {Key? key,
       this.name,
+      this.email,
       this.contact,
       this.address,
       this.ic,
       this.citizenship,
-      this.major, this.initialMatric})
+      this.major,
+      this.initialMatric})
       : super(key: key);
 
-  final String? name, contact, address, ic, citizenship, major, initialMatric;
+  final String? name,
+      email,
+      contact,
+      address,
+      ic,
+      citizenship,
+      major,
+      initialMatric;
 
   @override
   _studentState createState() => _studentState();
@@ -21,6 +31,8 @@ class Student extends StatefulWidget {
 class _studentState extends State<Student> {
   late TextEditingController name =
       TextEditingController(text: widget.name ?? '-');
+  late TextEditingController email =
+      TextEditingController(text: widget.email ?? '-');
   late TextEditingController matric =
       TextEditingController(text: widget.initialMatric ?? '-');
   late TextEditingController contact =
@@ -35,6 +47,7 @@ class _studentState extends State<Student> {
   void initState() {
     super.initState();
     name = TextEditingController(text: widget.name ?? '-');
+    email = TextEditingController(text: widget.email ?? '-');
     matric = TextEditingController(text: widget.initialMatric ?? '-');
     contact = TextEditingController(text: widget.contact ?? '-');
     address = TextEditingController(text: widget.address ?? '-');
@@ -78,6 +91,7 @@ class _studentState extends State<Student> {
 
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
     return SingleChildScrollView(
       child: Container(
         color: Colors.white.withOpacity(0.1),
@@ -87,12 +101,11 @@ class _studentState extends State<Student> {
           children: [
             const SizedBox(height: 20),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Name', name.text),
-              _buildDetail2('Matric No', matric.text),
-              _buildDetail2('Matric No','${widget.initialMatric}')
+              _buildDetail('Name', '${user?.displayName}'),
+              _buildDetail2('Matric No', '${widget.initialMatric}')
             ]),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Email', 'generate from login'),
+              _buildDetail('Email', '${user?.email}'),
               _buildDetail2('Major', dropdownValueMajor)
             ]),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -113,13 +126,16 @@ class _studentState extends State<Student> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => studentForm(
-                          initialBr: dropDownValueBr,
-                          initialName: name.text,
-                          initialContact: contact.text,
-                          initialAddress: address.text,
-                          initialIc: ic.text,
-                          initialCitizenship: citizenship.text,
-                          initialMajor: dropdownValueMajor, matric: '',),
+                        initialBr: dropDownValueBr,
+                        initialName: name.text,
+                        initialEmail: email.text,
+                        initialContact: contact.text,
+                        initialAddress: address.text,
+                        initialIc: ic.text,
+                        initialCitizenship: citizenship.text,
+                        initialMajor: dropdownValueMajor,
+                        matric: '',
+                      ),
                     ),
                   );
 
@@ -128,6 +144,7 @@ class _studentState extends State<Student> {
                       print('Result: $result');
                       dropDownValueBr = result['br'] ?? '-';
                       name.text = result['name'] ?? '-';
+                      email.text = result['email'] ?? '-';
                       matric.text = result['matric'] ?? '-';
                       contact.text = result['contact'] ?? '-';
                       address.text = result['address'] ?? '-';
