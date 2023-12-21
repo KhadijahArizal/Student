@@ -1,28 +1,29 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class studentForm extends StatefulWidget {
-   studentForm(
-      {Key? key,
-      this.initialBr,
-      this.initialName,
-      this.initialContact,
-      this.initialAddress,
-      this.initialIc,
-      this.initialCitizenship,
-      this.initialMajor,
-      required this.matric,})
-      : super(key: key);
+  studentForm({
+    Key? key,
+    this.initialBr,
+    this.initialContact,
+    this.initialAddress,
+    this.initialIc,
+    this.initialCitizenship,
+    this.initialMajor,
+    required this.matric,
+    required String initialName,
+    required String initialEmail,
+  }) : super(key: key);
 
   final String? initialBr,
-      initialName,
       initialContact,
       initialAddress,
       initialIc,
       initialCitizenship,
       initialMajor;
-    final String matric;
+  final String matric;
 
   @override
   _studentFormState createState() => _studentFormState();
@@ -36,33 +37,33 @@ String dropDownValueBr = 'Br';
 class _studentFormState extends State<studentForm> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController name = TextEditingController();
+  TextEditingController email = TextEditingController();
   TextEditingController contact = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController ic = TextEditingController();
   TextEditingController citizenship = TextEditingController();
   late String _matric;
-  late DatabaseReference studentdb;
+  User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
-    studentdb = FirebaseDatabase.instance.ref('Student Details');
     _matric = widget.matric;
-    if (widget.initialName != null) {
-      dropDownValueBr = widget.initialBr ?? '-';
-      name.text = widget.initialName!;
-      contact.text = widget.initialContact ?? '-';
-      address.text = widget.initialAddress ?? '-';
-      ic.text = widget.initialIc ?? '-';
-      citizenship.text = widget.initialCitizenship ?? '-';
-      dropdownValueMajor = widget.initialMajor ?? '-';
-    }
+    name.text = '${user?.displayName}';
+    email.text = '${user?.email}';
+    dropDownValueBr = widget.initialBr ?? '-';
+    contact.text = widget.initialContact ?? '-';
+    address.text = widget.initialAddress ?? '-';
+    ic.text = widget.initialIc ?? '-';
+    citizenship.text = widget.initialCitizenship ?? '-';
+    dropdownValueMajor = widget.initialMajor ?? '-';
   }
 
   void goStudent() {
     Navigator.pop(context, {
-      'br': dropDownValueBr,
       'name': name.text,
+      'email': email.text,
+      'br': dropDownValueBr,
       'contact': contact.text,
       'address': address.text,
       'ic': ic.text,
@@ -98,7 +99,6 @@ class _studentFormState extends State<studentForm> {
           ],
         ),
       );
-
 
   Widget _email({required String email}) => Container(
         alignment: Alignment.topLeft,
@@ -229,11 +229,7 @@ class _studentFormState extends State<studentForm> {
                                       Flexible(
                                           flex: 2,
                                           child: TextFormField(
-                                            onChanged: (value) {
-                                              setState(() {
-                                                name.text = value;
-                                              });
-                                            },
+                                            controller: name,
                                             decoration: InputDecoration(
                                                 border: OutlineInputBorder(
                                                     borderRadius:
@@ -248,9 +244,8 @@ class _studentFormState extends State<studentForm> {
                                                 filled: true,
                                                 prefixIcon: const Icon(
                                                     Icons.title_rounded),
-                                                labelText: 'Name',
-                                                hintText:
-                                                    "Similar to i-Ma'luum"),
+                                                labelText: 'Name'),
+                                            readOnly: true,
                                           )),
                                     ],
                                   ),
@@ -326,6 +321,7 @@ class _studentFormState extends State<studentForm> {
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
+                            controller: email,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
@@ -336,7 +332,7 @@ class _studentFormState extends State<studentForm> {
                               prefixIcon: const Icon(Icons.link_rounded),
                               labelText: 'E-mail',
                             ),
-                            enabled: false),
+                            readOnly: true),
                         const SizedBox(height: 20),
                         TextFormField(
                           onChanged: (value) {
@@ -400,16 +396,29 @@ class _studentFormState extends State<studentForm> {
                                   Expanded(
                                       child: ElevatedButton(
                                     onPressed: () {
-                                      studentdb.set({
-                                'Student Name': name.text,
-                                'Matric No': _matric,
-                                //'Email': email,
-                                'Major': dropdownValueMajor,
-                                'Contact No': contact.text,
-                                'Address': address.text,
-                                'IC or Passport': ic.text,
-                                'Citizenship': citizenship.text,
-                              });
+                                      User? user =
+                                          FirebaseAuth.instance.currentUser;
+
+                                      if (user != null) {
+                                        String userId = user.uid;
+
+                                        DatabaseReference userRef =
+                                            FirebaseDatabase.instance
+                                                .ref('Student')
+                                                .child('Student Details')
+                                                .child(userId);
+
+                                        userRef.set({
+                                          'Student Name': name.text,
+                                          'Matric No': _matric,
+                                          'Email': email.text,
+                                          'Major': dropdownValueMajor,
+                                          'Contact No': contact.text,
+                                          'Address': address.text,
+                                          'IC or Passport': ic.text,
+                                          'Citizenship': citizenship.text,
+                                        });
+                                      }
                                       goStudent();
                                     },
                                     style: ElevatedButton.styleFrom(
