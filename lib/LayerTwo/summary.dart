@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,8 @@ import 'package:student/BottomNavBar/bottomMenu.dart';
 import 'package:student/LayerTwo/Detect%20Status/statusManagament.dart';
 import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
 import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
+import 'package:student/LayerTwo/details.dart';
+import 'package:student/Service/auth_service.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
 import 'package:student/layerOne/iapForm.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,8 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 class Summary extends StatefulWidget {
   const Summary({
     Key? key,
-    this.dname,
-    this.demail,
     this.dmatric,
     this.start,
     this.end,
@@ -23,7 +24,7 @@ class Summary extends StatefulWidget {
   }) : super(key: key);
 
   final String? start, end;
-  final String? dname, demail, dmatric;
+  final String? dmatric;
   final int? approvedCount, pendingCount, rejectedCount;
 
   @override
@@ -36,12 +37,15 @@ class _SummaryState extends State<Summary> {
   bool _isVisible = false;
   String _status = '';
 
-  Widget _smallRect({required String profile}) {
+  Widget _smallRect({
+    required String profile,
+    required VoidCallback profileTap,
+  }) {
     Color? statusColor =
         _status == 'Active' ? Colors.green[700] : Colors.red[700];
 
-    return Container(
-      alignment: Alignment.topCenter,
+    return InkWell(
+      onTap: profileTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -51,7 +55,7 @@ class _SummaryState extends State<Summary> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               image: DecorationImage(
-                image: AssetImage(profile),
+                image: NetworkImage(profile), // Use NetworkImage for URLs
                 fit: BoxFit.cover,
               ),
             ),
@@ -61,7 +65,7 @@ class _SummaryState extends State<Summary> {
             style: TextStyle(color: Colors.black54, fontSize: 13),
           ),
           Text(
-            _status, // Use the updated status here
+            _status,
             style: TextStyle(
               color: statusColor,
               fontSize: 15,
@@ -215,10 +219,6 @@ class _SummaryState extends State<Summary> {
         Navigator.pushNamed(context, '/monthly_report');
       } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
-      } else if (index == 3) {
-        Navigator.pushNamed(context, '/details');
-      } else if (index == 4) {
-        Navigator.pushNamed(context, '/placements');
       }
     });
   }
@@ -307,10 +307,6 @@ class _SummaryState extends State<Summary> {
     }
   }
 
-  late TextEditingController sname =
-      TextEditingController(text: widget.dname ?? '-');
-  late TextEditingController semail =
-      TextEditingController(text: widget.demail ?? '-');
   late TextEditingController smatric =
       TextEditingController(text: widget.dmatric ?? '-');
 
@@ -323,8 +319,6 @@ class _SummaryState extends State<Summary> {
   @override
   void initState() {
     super.initState();
-    sname = TextEditingController(text: widget.dname ?? '-');
-    semail = TextEditingController(text: widget.demail ?? '-');
     smatric = TextEditingController(text: widget.dmatric ?? '-');
     _statusManagement = StatusManagement();
     statusManager.statusStream.listen((String status) {
@@ -338,13 +332,13 @@ class _SummaryState extends State<Summary> {
   @override
   Widget build(BuildContext context) {
     final Future<FirebaseApp> fApp = Firebase.initializeApp();
-    // ignore: unnecessary_null_comparison
+    User? user = FirebaseAuth.instance.currentUser;
+    AuthService authService = AuthService();
+
     if (widget.start != null && widget.end != null) {
       print('Start Date: ${widget.start}');
       print('End Date: ${widget.end}');
-      print('${widget.dname}');
       print('${widget.dmatric}');
-      print('${widget.demail}');
     }
 
     return Scaffold(
@@ -362,7 +356,7 @@ class _SummaryState extends State<Summary> {
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         iconTheme: const IconThemeData(
-          color: Color.fromRGBO(148, 112, 18, 1),
+          color: const Color.fromRGBO(0, 146, 143, 10),
           size: 30,
         ),
         leading: Builder(
@@ -401,11 +395,11 @@ class _SummaryState extends State<Summary> {
                     future: fApp,
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return Text('ERRORR');
+                        return const Text('ERRORR');
                       } else if (snapshot.hasData) {
-                        return Text('YEAYY');
+                        return const Text('YEAYY');
                       } else {
-                        return CircularProgressIndicator();
+                        return const CircularProgressIndicator();
                       }
                     }),
                 Column(
@@ -426,19 +420,29 @@ class _SummaryState extends State<Summary> {
                                         fontFamily: 'Futura'),
                                   ),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                    _name(name: dropDownValueBr),
-                                    _name(
-                                        name:
-                                            '${widget.dname}'), //${widget.userData['name']}}
-                                  ])
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
+                                      children: [
+                                        _name(name: dropDownValueBr),
+                                        const SizedBox(width: 5),
+                                        _name(
+                                            name:
+                                                '${user?.displayName}'), //${widget.userData['name']}}
+                                      ])
                                 ]),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 _smallRect(
-                                  profile: 'assets/profile.jpg',
+                                  profile:
+                                      authService.currentUser?.photoURL ?? '',
+                                  profileTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const Details()));
+                                  },
                                 ),
                               ],
                             ),
@@ -452,19 +456,18 @@ class _SummaryState extends State<Summary> {
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(90),
                             boxShadow: const [
-                              BoxShadow(color: Color.fromRGBO(148, 112, 18, 1))
+                              BoxShadow(
+                                color: const Color.fromRGBO(0, 146, 143, 10),
+                              )
                             ],
                             border: Border.all(
-                                color: const Color.fromRGBO(148, 112, 18, 1),
+                                color: const Color.fromRGBO(0, 146, 143, 10),
                                 width: 7)),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _studentContact(
-                                email: widget.demail ?? '-',
-                                matricNo: smatric.text ?? '-'),
-                            _studentContact(
-                                email: '${widget.demail}',
+                                email: '${user?.email}',
                                 matricNo: '${widget.dmatric}')
                           ],
                         ),
@@ -638,8 +641,8 @@ class _SummaryState extends State<Summary> {
                                           );
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromRGBO(
-                                              148, 112, 18, 1),
+                                          backgroundColor:
+                                              Colors.teal.shade900, //
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                                 100), // Set the border radius to 100
@@ -760,8 +763,6 @@ class _SummaryState extends State<Summary> {
           'Summary': '/summary',
           'Monthly Report': '/monthly_report',
           'Final Report': '/final_report',
-          'Details': '/details',
-          'Placements': '/placements',
         },
         studentStatus: _statusManagement.studentStatus,
       ),
