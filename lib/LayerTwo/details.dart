@@ -1,7 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:student/BottomNavBar/bottomMenu.dart';
 import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
+import 'package:student/Service/auth_service.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
 import 'package:student/LayerTwo/Tab/emergency.dart';
 import 'package:student/LayerTwo/Tab/student.dart';
@@ -39,24 +40,6 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
         ),
       );
 
-  int _currentIndex = 3;
-  void onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      if (index == 0) {
-        Navigator.pushNamed(context, '/summary');
-      } else if (index == 1 && _statusManagement.studentStatus == 'Active') {
-        Navigator.pushNamed(context, '/monthly_report');
-      } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
-        Navigator.pushNamed(context, '/final_report');
-      } else if (index == 3) {
-        Navigator.pushNamed(context, '/details');
-      } else if (index == 4) {
-        Navigator.pushNamed(context, '/placements');
-      }
-    });
-  }
-
   @override
   void initState() {
     _statusManagement = StatusManagement();
@@ -74,9 +57,22 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
+    AuthService authService = AuthService();
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(
+            size: 25,
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black87.withOpacity(0.7), // Use the specified color
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: const Text(
           'Details',
           style: TextStyle(
@@ -91,17 +87,6 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
         iconTheme: const IconThemeData(
           color: Color.fromRGBO(148, 112, 18, 1),
           size: 30,
-        ),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.sort,
-                  color: Color.fromRGBO(148, 112, 18, 1), size: 30),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
         ),
       ),
       drawer: sideNav2(studentStatus: statusManager.studentStatus),
@@ -166,33 +151,14 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                                             .withOpacity(0.1))
                                                   ],
                                                   shape: BoxShape.circle,
-                                                  image: const DecorationImage(
+                                                  image: DecorationImage(
                                                       fit: BoxFit.cover,
-                                                      image: AssetImage(
-                                                          'assets/profile.jpg'))),
+                                                      image: NetworkImage(
+                                                          authService
+                                                                  .currentUser
+                                                                  ?.photoURL ??
+                                                              ''))),
                                             ),
-                                            Positioned(
-                                                bottom: 0,
-                                                right: 0,
-                                                child: Container(
-                                                  height: 40,
-                                                  width: 40,
-                                                  decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                          width: 4,
-                                                          color: Colors.white),
-                                                      color:
-                                                          const Color.fromRGBO(
-                                                              148,
-                                                              112,
-                                                              18,
-                                                              10)),
-                                                  child: const Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                  ),
-                                                ))
                                           ]),
                                           const SizedBox(
                                             height: 10,
@@ -210,24 +176,26 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                                     children: [
                                                       _name(
                                                           name:
-                                                              dropDownValueBr),
-                                                      const SizedBox(width: 5)
+                                                              '${user?.displayName}'),
                                                     ]),
                                               ]),
-                                          const SizedBox(height: 5),
+                                          const SizedBox(height: 10),
                                           DefaultTabController(
                                             length: 2,
                                             child: TabBar(
-                                              unselectedLabelColor: Colors.white,
-                                  labelColor:
-                                      const Color.fromRGBO(148, 112, 18, 1),
-                                  indicatorColor: Colors.white,
-                                  indicatorWeight: 0.0,
-                                  indicatorSize: TabBarIndicatorSize.tab,
-                                  indicator: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5),
-                                    color: Colors.white,
-                                  ),
+                                              unselectedLabelColor:
+                                                  Colors.white,
+                                              labelColor: const Color.fromRGBO(
+                                                  148, 112, 18, 1),
+                                              indicatorColor: Colors.white,
+                                              indicatorWeight: 0.0,
+                                              indicatorSize:
+                                                  TabBarIndicatorSize.tab,
+                                              indicator: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                                color: Colors.white,
+                                              ),
                                               controller: tabController,
                                               tabs: const [
                                                 Tab(
@@ -249,11 +217,11 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                           children: const [
                                             // PERSONAL
                                             Student(
-                                              name: '-',
                                               contact: '-',
                                               address: '-',
                                               ic: '-',
-                                              citizenship: '-', initialMatric: '-',
+                                              citizenship: '-',
+                                              initialMatric: '-',
                                             ),
 
                                             // EMERGENCY
@@ -272,18 +240,6 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                           ),
                         ])),
               ])))),
-      bottomNavigationBar: BottomMenu(
-        currentIndex: _currentIndex,
-        onTap: onTabTapped,
-        routeNames: const {
-          'Summary': '/summary',
-          'Monthly Report': '/monthly_report',
-          'Final Report': '/final_report',
-          'Details': '/details',
-          'Placements': '/placements',
-        },
-        studentStatus: _statusManagement.studentStatus,
-      ),
     );
   }
 }
