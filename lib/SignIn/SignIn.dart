@@ -1,7 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:student/LayerTwo/summary.dart';
 import 'package:student/Service/auth_service.dart';
+import 'package:student/layerOne/passphrase.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({Key? key}) : super(key: key);
@@ -13,6 +12,7 @@ class SignIn extends StatefulWidget {
 class _SignInState extends State<SignIn> {
   AuthService authService = AuthService();
   bool isSignedIn = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -72,49 +72,46 @@ class _SignInState extends State<SignIn> {
                             ElevatedButton(
                               onPressed: () async {
                                 try {
-                                  // Use renderButton instead of signIn
+                                  await authService.handleSignin();
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
                                   await authService.handleSignin();
 
-                                  // Update the state to indicate that the user has signed in
                                   setState(() {
                                     isSignedIn = true;
+                                    _isLoading = false;
                                   });
-
-                                  // Print the message when signed in
                                   if (isSignedIn) {
                                     print('YEAYYY! Sign In!');
-                                    
+
                                     // ignore: use_build_context_synchronously
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const Summary(
-                                          dmatric: '',
-                                          start: '',
-                                          end: '',
-                                          approvedCount: 0,
-                                          pendingCount: 0,
-                                          rejectedCount: 0,
-                                        ),
+                                        builder: (context) =>
+                                            const Passphrase(),
                                       ),
                                     );
                                   }
                                 } catch (e) {
-                                  // Handle sign-in errors
                                   print('Error signing in: $e');
-                                  // You can show a snackbar or any UI indication of the error here
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    const Color.fromRGBO(148, 112, 18, 1),
+                                    const Color.fromRGBO(0, 146, 143, 10),
                               ),
                               child: const Text(
                                 'Sign In with Google',
                                 style: TextStyle(
                                     color: Colors.white, fontFamily: 'Futura'),
                               ),
-                            )
+                            ),
+                            if (_isLoading) const CircularProgressIndicator()
                           ],
                         )
                       ]),
