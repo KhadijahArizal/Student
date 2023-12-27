@@ -4,13 +4,11 @@ class BottomMenu extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final Map<String, String> routeNames;
-  final String studentStatus;
 
   BottomMenu({
     required this.currentIndex,
     required this.onTap,
     required this.routeNames,
-    required this.studentStatus,
   });
 
   @override
@@ -19,12 +17,10 @@ class BottomMenu extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      selectedItemColor: Colors.teal.shade900,
+      selectedItemColor: const Color.fromRGBO(0, 146, 143, 10),
       unselectedItemColor: Colors.grey,
       items: [
         for (var routeName in routeNames.keys)
-          if (!((routeName == 'Monthly Report' || routeName == 'Final Report') &&
-              studentStatus == 'Inactive'))
             BottomNavigationBarItem(
               icon: Column(
                 children: [
@@ -33,15 +29,15 @@ class BottomMenu extends StatelessWidget {
                     child: Icon(
                       getIconForRoute(routeName, currentIndex == routeNames.keys.toList().indexOf(routeName)),
                       color: currentIndex == routeNames.keys.toList().indexOf(routeName)
-                          ?  Colors.teal.shade900
+                          ?  const Color.fromRGBO(0, 146, 143, 10)
                           : Colors.grey,
                     ),
                   ),
                   if (currentIndex == routeNames.keys.toList().indexOf(routeName)) // Display the name only when selected
                     Text(
                       routeName,
-                      style:  TextStyle(
-                        color:  Colors.teal.shade900,
+                      style:  const TextStyle(
+                        color:  Color.fromRGBO(0, 146, 143, 10)
                       ),
                     ),
                 ],
