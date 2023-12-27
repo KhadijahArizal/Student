@@ -1,7 +1,12 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'zone_list.dart';
 import 'package:flutter/material.dart';
 //import 'package:url_launcher/url_launcher.dart';
@@ -20,7 +25,7 @@ class CompanyForm extends StatefulWidget {
       this.initialPostcode,
       this.initialDuration,
       this.initialStart,
-      this.initialEnd})
+      this.initialEnd, required this.onOfferLetterSelected})
       : super(key: key);
 
   final String? initialCompany,
@@ -35,6 +40,7 @@ class CompanyForm extends StatefulWidget {
       initialDuration,
       initialStart,
       initialEnd;
+      final void Function(String?) onOfferLetterSelected;
 
   @override
   _CompanyFormState createState() => _CompanyFormState();
@@ -114,31 +120,29 @@ String dropDownValueIndustry = 'Industry';
 
 class _CompanyFormState extends State<CompanyForm> {
   final _formKey = GlobalKey<FormState>();
-  final company = TextEditingController();
-  final postcode = TextEditingController();
-  final monthlyA = TextEditingController();
-  final duration = TextEditingController();
-  final start = TextEditingController();
-  final end = TextEditingController();
-  DateTime selectedDate = DateTime.now();
-  DateTime? startDate;
-  DateTime? endDate;
+  TextEditingController company = TextEditingController();
+  TextEditingController postcode = TextEditingController();
+  TextEditingController monthlyA = TextEditingController();
+  TextEditingController duration = TextEditingController();
+  TextEditingController companyAdd = TextEditingController();
+  TextEditingController start = TextEditingController();
+  TextEditingController end = TextEditingController();
+  bool _isUploading = false;
   late TextEditingController _offerletter;
-  late TextEditingController address ;
-  late DatabaseReference companydb;
+  String selectedFile = '-';
+  Data companyDate = Data();
 
   @override
   void initState() {
     super.initState();
-    companydb = FirebaseDatabase.instance.ref('Company Details');
-    
+    companyDate = Provider.of<Data>(context, listen: false);
     if (widget.initialCompany != null) {
-      company.text = widget.initialCompany ?? '${widget.initialCompany}';
+      company.text = widget.initialCompany ?? '-';
       _offerletter = TextEditingController(text: "-");
       dropDownValueIndustry = widget.initialIndustry!;
       dropDownValueSector = widget.initialSector!;
       dropDownValueZone = widget.initialZone!;
-      address = TextEditingController(text: '${widget.initialAddress}');
+      companyAdd.text = widget.initialAddress ?? '-';
       postcode.text = widget.initialPostcode!;
       monthlyA.text = widget.initialAllowance ?? '-';
       start.text = widget.initialStart ?? '-';
@@ -147,24 +151,9 @@ class _CompanyFormState extends State<CompanyForm> {
     }
   }
 
-  void goCompany() {
-    Navigator.pop(context, {
-      'company': company.text,
-      'letter': _offerletter.text,
-      'industry': dropDownValueIndustry,
-      'sector': dropDownValueSector,
-      'zone': dropDownValueZone,
-      'address': address.text,
-      'postcode': postcode.text,
-      'monthlyA': monthlyA.text,
-      'start': start.text,
-      'end': end.text,
-      'duration': duration.text
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
@@ -190,7 +179,7 @@ class _CompanyFormState extends State<CompanyForm> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-                color: Color.fromRGBO(148, 112, 18, 1), size: 30)),
+                color: Color.fromRGBO(0, 146, 143, 10), size: 30)),
         body: SafeArea(
             child: Container(
                 padding: const EdgeInsets.all(20),
@@ -209,507 +198,526 @@ class _CompanyFormState extends State<CompanyForm> {
                     child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                            alignment: Alignment.bottomCenter,
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: Form(
-                                key: _formKey,
-                                child: Column(children: [
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        company.text = value;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.domain_rounded),
-                                      labelText: 'Company',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'Offer Letter',
-                                                style: TextStyle(
-                                                    color: Colors.black87,
-                                                    fontSize: 15,
-                                                    fontFamily: 'Futura'),
-                                                textAlign: TextAlign.left,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              ElevatedButton(
-                                                  onPressed: _pickFile,
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color.fromRGBO(
-                                                            148, 112, 18, 1),
-                                                  ),
-                                                  child: const Text(
-                                                    'Attach File',
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontFamily: 'Futura'),
-                                                  )),
-                                            ]),
-                                        const SizedBox(height: 7),
-                                        Text(
-                                          _offerletter.text.isNotEmpty
-                                              ? 'Selected File: ${_offerletter.text}'
-                                              : '',
-                                          style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontFamily: 'Futura',
-                                          ),
-                                        ),
-                                      ]),
-                                  const SizedBox(height: 20),
-                                  Container(
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 10, bottom: 10),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey[100],
-                                    ),
-                                    child: ExpansionTile(
-                                      title: const Text(
-                                          'Select Industry, Sector, and Zone',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                          )),
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          padding: const EdgeInsets.all(4),
-                                          child: DropdownButton<String>(
-                                            isExpanded: true,
-                                            underline:
-                                                Container(), // Remove underline
-                                            value: dropDownValueIndustry,
-                                            onChanged: (String? value) {
-                                              setState(() {
-                                                dropDownValueIndustry = value!;
-                                              });
-                                            },
-                                            items: industry
-                                                .map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                                return DropdownMenuItem<String>(
-                                                  value: value,
-                                                  child: Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                            left: 5),
-                                                    alignment:
-                                                        Alignment.centerLeft,
-                                                    child: Text(value),
-                                                  ),
-                                                );
-                                              },
-                                            ).toList(),
-                                            icon: const Icon(
-                                                Icons.keyboard_arrow_down),
-                                            iconSize: 24,
-                                            elevation: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Container(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          padding: const EdgeInsets.all(4),
-                                          child: DropdownButton<String>(
-                                            isExpanded: true,
-                                            underline:
-                                                Container(), // Remove underline
-                                            value: dropDownValueSector,
-                                            onChanged: (String? value) {
-                                              setState(() {
-                                                dropDownValueSector = value!;
-                                              });
-                                            },
-                                            items: sector
-                                                .map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                                return DropdownMenuItem<String>(
-                                                  value: value,
-                                                  child: Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                            left: 5),
-                                                    alignment:
-                                                        Alignment.centerLeft,
-                                                    child: Text(value),
-                                                  ),
-                                                );
-                                              },
-                                            ).toList(),
-                                            icon: const Icon(
-                                                Icons.keyboard_arrow_down),
-                                            iconSize: 24,
-                                            elevation: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Flexible(
-                                              flex: 3,
-                                              child: Container(
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8),
-                                                padding:
-                                                    const EdgeInsets.all(4),
-                                                child: DropdownButton<String>(
-                                                  isExpanded: true,
-                                                  underline:
-                                                      Container(), // Remove underline
-                                                  value: dropDownValueZone,
-                                                  onChanged: (String? value) {
-                                                    setState(() {
-                                                      dropDownValueZone =
-                                                          value!;
-                                                    });
-                                                  },
-                                                  items: zone.map<
-                                                      DropdownMenuItem<String>>(
-                                                    (String value) {
-                                                      return DropdownMenuItem<
-                                                          String>(
-                                                        value: value,
-                                                        child: Container(
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 5),
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          child: Text(value),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ).toList(),
-                                                  icon: const Icon(Icons
-                                                      .keyboard_arrow_down),
-                                                  iconSize: 24,
-                                                  elevation: 16,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Flexible(
-                                              flex: 0,
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  _showZoneSelectionModal(
-                                                      context);
-                                                },
-                                                child: const Icon(
-                                                  Icons.info,
-                                                  size: 30,
-                                                  color: Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        address.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.streetAddress,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.location_on_rounded),
-                                      labelText: 'Address',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        postcode.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon: const Icon(
-                                          Icons.local_post_office_rounded),
-                                      labelText: 'Postcode',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        monthlyA.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
+                  child: Consumer<Data>(builder: (context, companyDate, child) {
+                    return Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                              alignment: Alignment.bottomCenter,
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: Form(
+                                  key: _formKey,
+                                  child: Column(children: [
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.company,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon:
+                                            const Icon(Icons.domain_rounded),
+                                        labelText: 'Company',
                                       ),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon: const Icon(
-                                          Icons.monetization_on_rounded),
-                                      labelText: 'Monthly Allowance',
                                     ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey[100],
+                                    const SizedBox(height: 20),
+                                    Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Offer Letter',
+                                                  style: TextStyle(
+                                                      color: Colors.black87,
+                                                      fontSize: 15,
+                                                      fontFamily: 'Futura'),
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                ElevatedButton(
+                                                    onPressed: _pickFile,
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          const Color.fromRGBO(
+                                                              0, 146, 143, 10),
+                                                    ),
+                                                    child: const Text(
+                                                      'Attach File',
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontFamily: 'Futura'),
+                                                    )),
+                                                if (_isUploading)
+                                                  const CircularProgressIndicator(),
+                                              ]),
+                                          const SizedBox(height: 7),
+                                          Text(
+                                            _offerletter.text.isNotEmpty
+                                                ? 'Selected File: ${_offerletter.text}'
+                                                : '',
+                                            style: const TextStyle(
+                                              color: Colors.black87,
+                                              fontFamily: 'Futura',
+                                            ),
+                                          ),
+                                        ]),
+                                    const SizedBox(height: 20),
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      padding: const EdgeInsets.all(4),
+                                      child: DropdownButton<String>(
+                                        isExpanded: true,
+                                        underline:
+                                            Container(), // Remove underline
+                                        value: dropDownValueIndustry,
+                                        onChanged: (String? value) {
+                                          setState(() {
+                                            dropDownValueIndustry = value!;
+                                          });
+                                        },
+                                        items: industry
+                                            .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Container(
+                                                margin: const EdgeInsets.only(
+                                                    left: 5),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(value),
+                                              ),
+                                            );
+                                          },
+                                        ).toList(),
+                                        icon: const Icon(
+                                            Icons.keyboard_arrow_down),
+                                        iconSize: 24,
+                                        elevation: 16,
+                                      ),
                                     ),
-                                    child: ExpansionTile(
-                                      title: const Text(
-                                          'Select Start Date and End Date',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                          )),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      padding: const EdgeInsets.all(4),
+                                      child: DropdownButton<String>(
+                                        isExpanded: true,
+                                        underline:
+                                            Container(), // Remove underline
+                                        value: dropDownValueSector,
+                                        onChanged: (String? value) {
+                                          setState(() {
+                                            dropDownValueSector = value!;
+                                          });
+                                        },
+                                        items: sector
+                                            .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Container(
+                                                margin: const EdgeInsets.only(
+                                                    left: 5),
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(value),
+                                              ),
+                                            );
+                                          },
+                                        ).toList(),
+                                        icon: const Icon(
+                                            Icons.keyboard_arrow_down),
+                                        iconSize: 24,
+                                        elevation: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
                                       children: [
-                                        const SizedBox(height: 12),
-                                        TextFormField(
-                                          controller: start,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                width: 0,
-                                                style: BorderStyle.none,
-                                              ),
+                                        Flexible(
+                                          flex: 3,
+                                          child: Container(
+                                            margin: const EdgeInsets.symmetric(
+                                                vertical: 8),
+                                            padding: const EdgeInsets.all(4),
+                                            child: DropdownButton<String>(
+                                              isExpanded: true,
+                                              underline:
+                                                  Container(), // Remove underline
+                                              value: dropDownValueZone,
+                                              onChanged: (String? value) {
+                                                setState(() {
+                                                  dropDownValueZone = value!;
+                                                });
+                                              },
+                                              items: zone.map<
+                                                  DropdownMenuItem<String>>(
+                                                (String value) {
+                                                  return DropdownMenuItem<
+                                                      String>(
+                                                    value: value,
+                                                    child: Container(
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              left: 5),
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      child: Text(value),
+                                                    ),
+                                                  );
+                                                },
+                                              ).toList(),
+                                              icon: const Icon(
+                                                  Icons.keyboard_arrow_down),
+                                              iconSize: 24,
+                                              elevation: 16,
                                             ),
-                                            fillColor: Colors.grey[100],
-                                            filled: true,
-                                            prefixIcon: const Icon(
-                                                Icons.calendar_today),
-                                            labelText: 'Start Date',
                                           ),
-                                          onTap: () async {
-                                            DateTime? pickedDate =
-                                                await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime(2000),
-                                              lastDate: DateTime(2101),
-                                            );
-
-                                            if (pickedDate != null &&
-                                                (startDate == null ||
-                                                    pickedDate
-                                                        .isAfter(startDate!))) {
-                                              setState(() {
-                                                startDate = pickedDate;
-                                                start.text =
-                                                    DateFormat('dd MMMM yyyy')
-                                                        .format(pickedDate);
-                                                calculateDuration();
-                                              });
-                                            } else {
-                                              // Display an error for an invalid date range.
-                                              showErrorDialog(
-                                                  'Invalid date range');
-                                            }
-                                          },
                                         ),
-                                        const SizedBox(height: 20),
-                                        TextFormField(
-                                          controller: end,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                width: 0,
-                                                style: BorderStyle.none,
-                                              ),
+                                        const SizedBox(width: 5),
+                                        Flexible(
+                                          flex: 0,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              _showZoneSelectionModal(context);
+                                            },
+                                            child: const Icon(
+                                              Icons.info,
+                                              size: 30,
+                                              color: Color.fromRGBO(
+                                                  0, 146, 143, 10),
                                             ),
-                                            fillColor: Colors.grey[100],
-                                            filled: true,
-                                            prefixIcon: const Icon(
-                                                Icons.calendar_today),
-                                            labelText: 'End Date',
                                           ),
-                                          onTap: () async {
-                                            DateTime? pickedDate =
-                                                await showDatePicker(
-                                              context: context,
-                                              initialDate:
-                                                  startDate ?? DateTime.now(),
-                                              firstDate: DateTime(2000),
-                                              lastDate: DateTime(2101),
-                                            );
-
-                                            if (pickedDate != null &&
-                                                (endDate == null ||
-                                                    pickedDate
-                                                        .isAfter(endDate!))) {
-                                              setState(() {
-                                                endDate = pickedDate;
-                                                end.text =
-                                                    DateFormat('dd MMMM yyyy')
-                                                        .format(pickedDate);
-                                                calculateDuration();
-                                              });
-                                            } else {
-                                              // Display an error for an invalid date range.
-                                              showErrorDialog(
-                                                  'Invalid date range');
-                                            }
-                                          },
-                                        ),
-                                        const SizedBox(height: 20),
-                                        TextFormField(
-                                          controller: duration,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                width: 0,
-                                                style: BorderStyle.none,
-                                              ),
-                                            ),
-                                            fillColor: Colors.grey[100],
-                                            filled: true,
-                                            labelText: 'Duration (Months)',
-                                          ),
-                                          readOnly: true,
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      MouseRegion(
-                                        cursor: SystemMouseCursors.click,
-                                        child: Tooltip(
-                                          message:
-                                              'Note\nMake sure Monthly Allowance (Oversea Placement Convert to MYR), Sector, Industry Sector, and Zone are correct.',
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  showMoney(context);
-                                                },
-                                                child: const Icon(
-                                                  Icons.info,
-                                                  size: 30,
-                                                  color: Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                                ),
-                                              )
-                                            ],
+                                    const SizedBox(height: 20),
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.companyAdd,
+                                      keyboardType: TextInputType.streetAddress,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon: const Icon(
+                                            Icons.location_on_rounded),
+                                        labelText: 'Address',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.postcode,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon: const Icon(
+                                            Icons.local_post_office_rounded),
+                                        labelText: 'Postcode',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.monthlyA,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
                                           ),
                                         ),
-                                      )
-                                    ],
-                                  )
-                                ]))),
-                        const SizedBox(height: 25),
-                        Container(
-                            child: Row(children: [
-                          Expanded(
-                              child: ElevatedButton(
-                            onPressed: () {
-                              companydb.set({
-                                'Company Name': company.text,
-                                'Offer Letter': _offerletter.text,
-                                'Industry': dropDownValueIndustry,
-                                'Sector': dropDownValueSector,
-                                'Zone': dropDownValueZone,
-                                'Address': address.text,
-                                'Postcode': postcode.text,
-                                'Monthly Allowance': monthlyA.text,
-                                'Start Date': start.text,
-                                'End Date': end.text,
-                              });
-                              goCompany();
-                            },
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromRGBO(148, 112, 18, 1),
-                                minimumSize: const Size.fromHeight(50)),
-                            child: const Text('Save',
-                                style: TextStyle(color: Colors.white)),
-                          ))
-                        ]))
-                      ]),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon: const Icon(
+                                            Icons.monetization_on_rounded),
+                                        labelText: 'Monthly Allowance',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.grey[100],
+                                      ),
+                                      child: ExpansionTile(
+                                        title: const Text(
+                                            'Select Start Date and End Date',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                            )),
+                                        children: [
+                                          const SizedBox(height: 12),
+                                          TextFormField(
+                                            key: UniqueKey(),
+                                            readOnly: true,
+                                            controller: companyDate.start,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              fillColor: Colors.grey[100],
+                                              filled: true,
+                                              prefixIcon: const Icon(
+                                                  Icons.calendar_today),
+                                              labelText: 'Start Date',
+                                            ),
+                                            onTap: () async {
+                                              DateTime? pickedDate =
+                                                  await showDatePicker(
+                                                context: context,
+                                                initialDate:
+                                                    companyDate.startDate ??
+                                                        DateTime.now(),
+                                                firstDate: DateTime(2000),
+                                                lastDate: DateTime(2101),
+                                              );
+
+                                              if (pickedDate != null &&
+                                                  (companyDate.startDate ==
+                                                          null ||
+                                                      pickedDate.isAfter(
+                                                          companyDate
+                                                              .startDate!))) {
+                                                setState(() {
+                                                  companyDate.startDate =
+                                                      pickedDate;
+                                                  companyDate.start.text =
+                                                      DateFormat('dd MMMM yyyy')
+                                                          .format(pickedDate);
+                                                  companyDate.calculateDuration(
+                                                      context);
+                                                });
+                                              } else {
+                                                showErrorDialog(
+                                                    'Invalid date range');
+                                              }
+                                            },
+                                          ),
+                                          const SizedBox(height: 20),
+                                          // End Date Picker
+                                          TextFormField(
+                                            key: UniqueKey(),
+                                            readOnly: true,
+                                            controller: companyDate.end,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              fillColor: Colors.grey[100],
+                                              filled: true,
+                                              prefixIcon: const Icon(
+                                                  Icons.calendar_today),
+                                              labelText: 'End Date',
+                                            ),
+                                            onTap: () async {
+                                              DateTime? pickedDate =
+                                                  await showDatePicker(
+                                                context: context,
+                                                initialDate:
+                                                    companyDate.endDate ??
+                                                        DateTime.now(),
+                                                firstDate: DateTime(2000),
+                                                lastDate: DateTime(2101),
+                                              );
+
+                                              if (pickedDate != null &&
+                                                  (companyDate.endDate ==
+                                                          null ||
+                                                      pickedDate.isAfter(
+                                                          companyDate
+                                                              .endDate!))) {
+                                                setState(() {
+                                                  companyDate.endDate =
+                                                      pickedDate;
+                                                  companyDate.end.text =
+                                                      DateFormat('dd MMMM yyyy')
+                                                          .format(pickedDate);
+                                                  companyDate.calculateDuration(
+                                                      context);
+                                                });
+                                              } else {
+                                                showErrorDialog(
+                                                    'Invalid date range');
+                                              }
+                                            },
+                                          ),
+                                          // Duration Field
+                                          const SizedBox(height: 20),
+                                          Text(
+                                            'Duration (Months): ${companyDate.duration.text}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.black,
+                                            ),
+                                            textAlign: TextAlign.start,
+                                          ),
+                                          const SizedBox(height: 20),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        MouseRegion(
+                                          cursor: SystemMouseCursors.click,
+                                          child: Tooltip(
+                                            message:
+                                                'Note\nMake sure Monthly Allowance (Oversea Placement Convert to MYR), Sector, Industry Sector, and Zone are correct.',
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    showMoney(context);
+                                                  },
+                                                  child: const Icon(
+                                                    Icons.info,
+                                                    size: 30,
+                                                    color: Color.fromRGBO(
+                                                        0, 146, 143, 10),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    )
+                                  ]))),
+                          const SizedBox(height: 25),
+                          Row(children: [
+                            Expanded(
+                                child: ElevatedButton(
+                              onPressed: () {
+                                companyDate.duration.text = duration.text;
+                                companyDate.calculateDuration(context);
+                                User? user = FirebaseAuth.instance.currentUser;
+
+                                if (user != null) {
+                                  String userId = user.uid;
+
+                                  DatabaseReference userRef = FirebaseDatabase
+                                      .instance
+                                      .ref('Student')
+                                      .child('Company Details')
+                                      .child(userId);
+
+                                  userRef.set({
+                                    'Company Name': studentData.company.text,
+                                    'Offer Letter': selectedFile,
+                                    'Industry': dropDownValueIndustry,
+                                    'Sector': dropDownValueSector,
+                                    'Zone': dropDownValueZone,
+                                    'Address': studentData.companyAdd.text,
+                                    'Postcode': studentData.postcode.text,
+                                    'Monthly Allowance':
+                                        studentData.monthlyA.text,
+                                    'Start Date': companyDate.start.text,
+                                    'End Date': companyDate.end.text,
+                                    'Duration': companyDate.duration.text
+                                  });
+                                  Navigator.pushNamed(context, '/placements');
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      const Color.fromRGBO(0, 146, 143, 10),
+                                  minimumSize: const Size.fromHeight(50)),
+                              child: const Text('Save',
+                                  style: TextStyle(color: Colors.white)),
+                            ))
+                          ])
+                        ]);
+                  }),
                 )))));
   }
 
-  void _pickFile() async {
+  Future<void> _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      setState(() {
+        _isUploading = true;
+      });
 
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
       if (result != null && result.files.isNotEmpty) {
-        PlatformFile file = result.files.first;
-        print('Selected file: ${file.name}');
+        User? user = FirebaseAuth.instance.currentUser;
 
+        if (user != null) {
+          String userId = user.uid;
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('Offer Letter/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            String fileDownloadURL = await storageReference.getDownloadURL();
+             widget.onOfferLetterSelected(fileDownloadURL);
+
+            setState(() {
+              _offerletter.text = fileName;
+              selectedFile = fileDownloadURL;
+              _isUploading = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _offerletter.text = result.files.first.name;
+          _isUploading =
+              false; // Set loading state to false if picking is canceled
         });
       }
     } catch (e) {
-      print('Error picking a file: $e');
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading =
+            false; // Set loading state to false if picking is canceled
+      });
     }
   }
 
@@ -765,12 +773,17 @@ class _CompanyFormState extends State<CompanyForm> {
             ),
           ),
           actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK', style: TextStyle(color: Colors.black87)),
-            ),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
           ],
         );
       },
@@ -812,23 +825,6 @@ class _CompanyFormState extends State<CompanyForm> {
     );
   }
 
-  void calculateDuration() {
-    if (startDate != null && endDate != null) {
-      if (endDate!.isBefore(startDate!)) {
-        showErrorDialog('Invalid date range');
-      } else {
-        Duration difference = endDate!.difference(startDate!);
-        int months = (difference.inDays / 30).floor();
-
-        if (months < 6) {
-          showErrorDialog('Duration must be at least 6 months.');
-        } else {
-          duration.text = months.toString();
-        }
-      }
-    }
-  }
-
   void showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -838,12 +834,17 @@ class _CompanyFormState extends State<CompanyForm> {
               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
           content: Text(message),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('OK', style: TextStyle(color: Colors.black87)),
-            ),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
           ],
         );
       },
