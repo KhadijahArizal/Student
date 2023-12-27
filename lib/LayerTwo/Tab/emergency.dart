@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'package:student/LayerTwo/Tab/edit/emergencyForm.dart';
 
 class Emergency extends StatefulWidget {
@@ -10,10 +12,7 @@ class Emergency extends StatefulWidget {
     this.eaddress,
   }) : super(key: key);
 
-  final String? ename;
-  final String? relationship;
-  final String? econtact;
-  final String? eaddress;
+  final String? ename, relationship, econtact, eaddress;
 
   @override
   _EmergencyState createState() => _EmergencyState();
@@ -38,68 +37,64 @@ class _EmergencyState extends State<Emergency> {
     eaddress = TextEditingController(text: widget.eaddress ?? '-');
   }
 
+  Widget _buildDetail(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+        const SizedBox(height: 50),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return SingleChildScrollView(
         child: Container(
-            color: Colors.white.withOpacity(0.1),
-            padding: const EdgeInsets.all(40),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 20),
-              const Text('Name',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-              Text(ename.text, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 50),
-              const Text('Relationship',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-              Text(relationship.text, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 50),
-              const Text('Phone No',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-              Text(econtact.text, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 50),
-              const Text('Address',
-                  style: TextStyle(fontSize: 13, color: Colors.black54)),
-              Text(eaddress.text, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 70),
-              Container(
-                  child:
-                      Row(children: [
-                    Expanded(
-                        child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EmergencyForm(
-                              initialEname: ename.text,
-                              initialRelationship: relationship.text,
-                              initialEcontact: econtact.text,
-                              initialEaddress: eaddress.text,
-                            ),
-                          ),
-                        );
-
-                        if (result != null) {
-                          setState(() {
-                            print('Result from FinalReportUpload: $result');
-                            ename.text = result['ename'] ?? '-';
-                            relationship.text = result['relationship'] ?? '-';
-                            econtact.text = result['econtact'] ?? '-';
-                            eaddress.text = result['eaddress'] ?? '-';
-                          });
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                        minimumSize: const Size.fromHeight(50),
-                      ),
-                      icon: const Icon(
-                          Icons.edit_rounded,color: Colors.white), // Icon data for elevated button
-                      label: const Text("Edit",style: TextStyle(color: Colors.white)),
-                    ))
-                  ])),
-            ])));
+      color: Colors.white.withOpacity(0.1),
+      padding: const EdgeInsets.all(40),
+      child: Consumer<Data>(builder: (context, Data, child) {
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _buildDetail('Name', studentData.ename.text),
+          _buildDetail('Relationship', studentData.relationship.text),
+          _buildDetail('Emergency Contact Person', studentData.econtact.text),
+          _buildDetail('Home Address', studentData.eaddress.text),
+          const SizedBox(height: 70),
+          Row(children: [
+            Expanded(
+                child: ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EmergencyForm(
+                      initialEname: ename.text,
+                      initialRelationship: relationship.text,
+                      initialEcontact: econtact.text,
+                      initialEaddress: eaddress.text,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                minimumSize: const Size.fromHeight(50),
+              ),
+              icon: const Icon(Icons.edit_rounded,
+                  color: Colors.white), // Icon data for elevated button
+              label: const Text("Edit", style: TextStyle(color: Colors.white)),
+            ))
+          ]),
+        ]);
+      }),
+    ));
   }
 }
