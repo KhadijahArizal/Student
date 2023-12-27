@@ -1,46 +1,82 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 
 class AttachFileDetailsPage extends StatefulWidget {
   final MonthlyReport? editReport;
 
-  const AttachFileDetailsPage(
-      {super.key, this.editReport, required ReportType reportType});
+  const AttachFileDetailsPage({
+    super.key,
+    this.editReport,
+    required ReportType reportType,
+  });
 
   @override
   _AttachFileDetailsPageState createState() => _AttachFileDetailsPageState();
 }
 
-class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
-  late TextEditingController _fileNameController;
-  late TextEditingController _statusController;
-  late TextEditingController _monthController;
-  late TextEditingController _submitController;
+extension DateTimeExtension on DateTime {}
 
-  //RealtimeDatabase
-  final monthlydb = FirebaseDatabase.instance.ref('Monthly Report');
+class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
+  int submissionCount = 0;
+  DateTime selectedDate = DateTime.now();
+  String selectedFileMonthly = '';
+  late TextEditingController monthlyR;
+  bool _isUploading = false;
+
+  Widget _name({required String name}) => Container(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(name,
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 15,
+                    fontFamily: 'Futura',
+                    fontWeight: FontWeight.bold))
+          ],
+        ),
+      );
+
+  Widget _matricNo({required String matricNo}) => Container(
+        child: Column(
+          children: [
+            Text(
+              matricNo,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontFamily: 'Futura',
+                  fontWeight: FontWeight.bold),
+            )
+          ],
+        ),
+      );
 
   @override
   void initState() {
     super.initState();
-    _fileNameController =
-        TextEditingController(text: widget.editReport?.fileName ?? "-");
-    _statusController = TextEditingController(
-        text: widget.editReport?.status ?? "Pending"); //Approved
-    _monthController = TextEditingController(
-      text: DateFormat('MMMM').format(DateTime.now()),
-    );
-    _submitController = TextEditingController(
-        text: DateFormat('dd MMMM yyyy').format(DateTime.now()));
+    monthlyR = TextEditingController(text: "-");
+    Data reportsProvider = Provider.of<Data>(context, listen: false);
+    reportsProvider.statusController.text = 'Pending';
+    reportsProvider.submitController.text =
+        DateFormat('dd MMMM yyyy').format(DateTime.now());
+    reportsProvider.monthController.text =
+        DateFormat('MMMM').format(DateTime.now());
   }
 
   @override
   Widget build(BuildContext context) {
-
+    User? user = FirebaseAuth.instance.currentUser;
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
@@ -57,7 +93,7 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         iconTheme: const IconThemeData(
-          color: Color.fromRGBO(148, 112, 18, 1),
+          color: Color.fromRGBO(0, 146, 143, 10),
           size: 30,
         ),
       ),
@@ -78,121 +114,410 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _pickFile();
-                  },
-                  icon: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.black,
-                    size: 30, // Adjust the size of the icon
-                  ),
-                  label: const Text(
-                    'Choose New File',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  style: ButtonStyle(
-                    minimumSize:
-                        MaterialStateProperty.all(const Size.fromHeight(100)),
-                    backgroundColor: MaterialStateProperty.all(Colors.grey[50]),
-                    side: MaterialStateProperty.all(const BorderSide(
-                      color: Color.fromARGB(255, 216, 213, 213),
-                    )),
-                    elevation: MaterialStateProperty.all(0.01),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+              padding: const EdgeInsets.all(16.0),
+              child: Consumer<Data>(builder: (context, reportsProvider, child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Name',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black54,
+                                      )),
+                                  _name(name: '${user?.displayName}'),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text('Matric No',
+                                      style: TextStyle(
+                                          fontSize: 13, color: Colors.black54)),
+                                  _matricNo(matricNo: studentData.matric.text),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ]),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _pickFile();
+                      },
+                      icon: const Icon(
+                        Icons.add_rounded,
+                        color: Colors.black,
+                        size: 30, // Adjust the size of the icon
                       ),
-                    ),
-                  ),
-                ),
-                TextFormField(
-                  controller: _fileNameController,
-                  decoration: const InputDecoration(labelText: 'File Name'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _statusController,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _monthController,
-                  decoration: const InputDecoration(labelText: 'Month'),
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _submitController,
-                  decoration:
-                      const InputDecoration(labelText: 'Submission Date'),
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                Column(children: [
-                  Container(
-                      padding: const EdgeInsets.only(top: 20),
-                      alignment: Alignment.bottomCenter,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(
-                              color: Color.fromRGBO(
-                                  148, 112, 18, 1)), // Set the border side
-                          elevation: 0.0,
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: Color.fromRGBO(148, 112, 18, 1),
+                      label: const Text(
+                        'Choose New File',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      style: ButtonStyle(
+                        minimumSize: MaterialStateProperty.all(
+                            const Size.fromHeight(100)),
+                        backgroundColor:
+                            MaterialStateProperty.all(Colors.grey[50]),
+                        side: MaterialStateProperty.all(const BorderSide(
+                          color: Color.fromARGB(255, 216, 213, 213),
+                        )),
+                        elevation: MaterialStateProperty.all(0.01),
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                      )),
-                  Container(
-                    padding: const EdgeInsets.only(top: 20),
-                    alignment: Alignment.bottomCenter,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        monthlydb.push().set({
-                          'Name': _fileNameController.text,
-                          'Month': _monthController.text,
-                          'Submission Date': _submitController.text,
-                          'Status': _statusController.text,
-                        });
-                        _saveReport();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
                       ),
-                      child: Text(
-                          widget.editReport == null
-                              ? 'Submit Report'
-                              : 'Update Report',
-                          style: const TextStyle(color: Colors.white)),
                     ),
-                  ),
-                ]),
-              ],
-            ),
-          ),
+                    if (_isUploading) const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: Tooltip(
+                            message: 'Submission should be in PDF format',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    showPDFformat(context);
+                                  },
+                                  child: const Icon(
+                                    Icons.info,
+                                    size: 30,
+                                    color: Color.fromRGBO(0, 146, 143, 10),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      monthlyR.text.isNotEmpty
+                          ? 'Selected File: ${monthlyR.text}'
+                          : '-',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontFamily: 'Futura',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: reportsProvider.statusController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              width: 0, style: BorderStyle.none),
+                        ),
+                        fillColor: Colors.grey[100],
+                        filled: true,
+                        labelText: 'Status',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: reportsProvider.submitController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              width: 0, style: BorderStyle.none),
+                        ),
+                        fillColor: Colors.grey[100],
+                        filled: true,
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        labelText: 'Submission Date',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: reportsProvider.monthController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              width: 0, style: BorderStyle.none),
+                        ),
+                        fillColor: Colors.grey[100],
+                        filled: true,
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        labelText: 'Month',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: Tooltip(
+                            message:
+                                'Declaration\nBy clicking the submit button you are agreeing to the below statements: \n1. I have provided the correct and accurate information when completing this monthly report. \n2. I have consulted with my supervisor regarding the description of the assigned tasks for the month.\n3. I understand the department may collect my information and disclose to the kulliyyah for progress monitoring purposes.\n4. I am responsible for any legal implication imposed by the company for any misleading information found in the submitted report.',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    showDeclaration(context);
+                                  },
+                                  child: const Icon(
+                                    Icons.info,
+                                    size: 30,
+                                    color: Color.fromRGBO(0, 146, 143, 10),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Column(children: [
+                      Container(
+                          padding: const EdgeInsets.only(top: 20),
+                          alignment: Alignment.bottomCenter,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(50),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(
+                                  color: Color.fromRGBO(0, 146, 143, 10)),
+                              elevation: 0.0,
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Color.fromRGBO(0, 146, 143, 10),
+                              ),
+                            ),
+                          )),
+                      Container(
+                          padding: const EdgeInsets.only(top: 20),
+                          alignment: Alignment.bottomCenter,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              User? user = FirebaseAuth.instance.currentUser;
+                              int submissionCount =
+                                  reportsProvider.reports.length + 1;
+                              if (user != null) {
+                                String userId = user.uid;
+
+                                MonthlyReport newReport = MonthlyReport(
+                                  weekNumber: submissionCount,
+                                  fileName: monthlyR.text,
+                                  createdDate: DateFormat('dd MMMM yyyy')
+                                      .format(DateTime.now()),
+                                  month: reportsProvider.monthController.text,
+                                  submissionDate:
+                                      reportsProvider.submitController.text,
+                                  status: reportsProvider.statusController.text,
+                                  reportType: ReportType.file,
+                                  fileUrl: selectedFileMonthly,
+                                  onCalculateStatus:
+                                      (approved, pending, rejected) {
+                                    // Handle status calculation if needed
+                                  },
+                                );
+
+                                if (widget.editReport != null) {
+                                  Provider.of<Data>(context, listen: false)
+                                      .removeReport(widget.editReport!);
+                                }
+
+                                // Add the new report to the Data class
+                                Provider.of<Data>(context, listen: false)
+                                    .addReport(newReport);
+
+                                DatabaseReference userRef = FirebaseDatabase
+                                    .instance
+                                    .ref('Student')
+                                    .child('Monthly Report')
+                                    .child(userId)
+                                    .push();
+
+                                userRef.set({
+                                  'Name': monthlyR.text,
+                                  'Month': reportsProvider.monthController.text,
+                                  'Submission Date':
+                                      reportsProvider.submitController.text,
+                                  'Status':
+                                      reportsProvider.statusController.text,
+                                  'File': selectedFileMonthly,
+                                });
+
+                                // Navigate back to the monthly report page
+                                Navigator.pushNamed(context, '/monthly_report');
+                              }
+                              _saveReport();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(50),
+                              backgroundColor:
+                                  const Color.fromRGBO(0, 146, 143, 10),
+                            ),
+                            child: Text(
+                                widget.editReport == null
+                                    ? 'Submit Report'
+                                    : 'Update Report',
+                                style: const TextStyle(color: Colors.white)),
+                          )),
+                    ]),
+                  ],
+                );
+              })),
         ),
       ),
     );
   }
 
+  void showDeclaration(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Declaration',
+            style: TextStyle(
+              color: Colors.red[800],
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura',
+            ),
+          ),
+          content: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text:
+                      'By clicking the submit button you are agreeing to the below statements: \n',
+                ),
+                TextSpan(
+                  text:
+                      '\n1. I have provided the correct and accurate information when completing this monthly report. ',
+                ),
+                TextSpan(
+                  text:
+                      '\n2. I have consulted with my supervisor regarding the description of the assigned tasks for the month. ',
+                ),
+                TextSpan(
+                  text:
+                      '\n3. I understand the department may collect my information and disclose to the kulliyyah for progress monitoring purposes. ',
+                ),
+                TextSpan(
+                    text:
+                        '\n4. I am responsible for any legal implication imposed by the company for any misleading information found in the submitted report.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
+          ],
+        );
+      },
+    );
+  }
+
+  void showPDFformat(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Attention',
+            style: TextStyle(
+              color: Colors.red[800],
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura',
+            ),
+          ),
+          content: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: 'Submission should be in ',
+                ),
+                TextSpan(
+                  text: 'PDF format ',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Futura',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
+          ],
+        );
+      },
+    );
+  }
+
   void _saveReport() {
-    if (_fileNameController.text.trim().isEmpty) {
-      // Display an error message to the user
+    if (monthlyR.text.trim().isEmpty) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -210,10 +535,10 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
             actions: [
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
                 ),
                 child: const Text(
                   'OK',
@@ -223,44 +548,56 @@ class _AttachFileDetailsPageState extends State<AttachFileDetailsPage> {
           );
         },
       );
-    } else {
-      // Continue with saving the report
-      print('File Name: ${_fileNameController.text}');
-      print('Status: ${_statusController.text}');
-      print('Month: ${_monthController.text}');
-      print('Submission Date: ${_submitController.text}');
-
-      Navigator.pop(
-        context,
-        MonthlyReport(
-          fileName: _fileNameController.text,
-          status: _statusController.text,
-          month: _monthController.text,
-          submissionDate: _submitController.text,
-          reportType: ReportType.create,
-          onCalculateStatus: (int approved, int pending, int rejected) {},
-        ),
-      );
     }
   }
 
-  void _pickFile() async {
+  Future<void> _pickFile() async {
     try {
+      setState(() {
+        _isUploading = true;
+      });
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
-
       if (result != null && result.files.isNotEmpty) {
-        PlatformFile file = result.files.first;
-        print('Selected file: ${file.name}');
+        User? user = FirebaseAuth.instance.currentUser;
 
+        if (user != null) {
+          String userId = user.uid;
+
+          // Upload file to Firebase Storage
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('Monthly Report/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            // Retrieve download URL
+            String fileDownloadURL = await storageReference.getDownloadURL();
+
+            // Update selected file name
+            setState(() {
+              monthlyR.text = fileName;
+              selectedFileMonthly = fileDownloadURL;
+              _isUploading = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _fileNameController.text = result.files.first.name;
+          _isUploading =
+              false; // Set loading state to false if picking is canceled
         });
       }
     } catch (e) {
-      print('Error picking a file: $e');
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading =
+            false; // Set loading state to false if picking is canceled
+      });
     }
   }
 }
