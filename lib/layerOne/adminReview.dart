@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
+//import 'package:provider/provider.dart';
 
 class AdminReviewPage extends StatefulWidget {
   const AdminReviewPage({
@@ -31,9 +34,10 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    //Map<String, dynamic> userData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    User? user = FirebaseAuth.instance.currentUser;
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           Text(
@@ -46,9 +50,10 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(
-          color: Color.fromRGBO(148, 112, 18, 1),
+          color: Color.fromRGBO(0, 146, 143, 10),
           size: 30,
         ),
+        automaticallyImplyLeading: false
       ),
       body: Center(
         child: Column(
@@ -73,7 +78,7 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
                     child: Text(
                       'Thank You!',
                       style: TextStyle(
-                        color: Color.fromRGBO(148, 112, 18, 1),
+                        color: Color.fromRGBO(0, 146, 143, 10),
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Futura',
@@ -90,50 +95,52 @@ class _AdminReviewPageState extends State<AdminReviewPage> {
                           fontSize: 15,
                           fontFamily: 'Futura',
                         ),
-                        textAlign: TextAlign.justify,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
                   Padding(
                     padding:
                         const EdgeInsets.only(bottom: 10, left: 20, right: 20),
-                    child: Column(children: [
-                      Text(name.text,
+                    child: 
+                    Consumer<Data>(builder: (context, Data, child) {
+          return Column(children: [
+                      Text(studentData.iapname.text,
                           style: const TextStyle(
-                            color: Color.fromRGBO(148, 112, 18, 1),
+                            color: Color.fromRGBO(0, 146, 143, 10),
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Futura',
                           )),
                       Text(
-                          matric.text, //'Matric: ${userData['matric'] ?? '-'}',
+                          studentData.matric.text, //'Matric: ${userData['matric'] ?? '-'}',
                           style: const TextStyle(
-                            color: Color.fromRGBO(148, 112, 18, 1),
+                            color: Color.fromRGBO(0, 146, 143, 10),
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Futura',
                           )),
-                      Text(email.text,
+                      Text('${user?.email}',
                           style: const TextStyle(
-                            color: Color.fromRGBO(148, 112, 18, 1),
+                            color: Color.fromRGBO(0, 146, 143, 10),
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Futura',
                           ))
-                    ]),
+                    ]);}),
                   ),
                 ],
               ),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/signIn');
+                Navigator.pushNamed(context, '/summary');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
               ),
               child: const Text(
-                'Sign In',
+                'Check your status here',
                 style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Futura',
