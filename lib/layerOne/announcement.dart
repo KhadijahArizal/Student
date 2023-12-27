@@ -21,12 +21,12 @@ class _AnnouncementState extends State<Announcement> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-                color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+                color: Color.fromRGBO(0, 146, 143, 10), size: 30),
                 leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.sort,
-                  color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+                  color: Color.fromRGBO(0, 146, 143, 10), size: 30),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -80,7 +80,7 @@ class _AnnouncementState extends State<Announcement> {
                                         alignment: Alignment.center,
                                         decoration: const BoxDecoration(
                                           color:
-                                              Color.fromRGBO(148, 112, 18, 1),
+                                              Color.fromRGBO(0, 146, 143, 10),
                                           borderRadius: BorderRadius.only(
                                               topRight: Radius.circular(10),
                                               topLeft: Radius.circular(10)),
