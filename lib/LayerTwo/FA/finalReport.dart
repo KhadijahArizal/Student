@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:student/BottomNavBar/bottomMenu.dart';
 import 'package:student/LayerTwo/FA/finalReportUpload.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
 import '../Detect Status/statusManagament.dart';
 
@@ -32,16 +34,6 @@ class FinalReport extends StatefulWidget {
 class _FinalReportState extends State<FinalReport> {
   final StatusManagement statusManager = StatusManagement();
   late StatusManagement _statusManagement;
-  late TextEditingController title =
-      TextEditingController(text: widget.title ?? '-');
-  late TextEditingController drive =
-      TextEditingController(text: widget.drive ?? '-');
-  late TextEditingController date =
-      TextEditingController(text: widget.date ?? '-');
-  late TextEditingController fileName =
-      TextEditingController(text: widget.fileName ?? '-');
-  late TextEditingController status =
-      TextEditingController(text: widget.status ?? '-');
 
   Widget _report({required String report}) => Container(
         child: Column(
@@ -69,11 +61,11 @@ class _FinalReportState extends State<FinalReport> {
     );
   }
 
-  Widget _link({required String link}) => Container(
+  Widget _file({required String file}) => Container(
         child: Column(
           children: [
             Text(
-              link,
+              file,
               style: const TextStyle(
                 color: Colors.black87,
                 fontSize: 16,
@@ -152,10 +144,6 @@ class _FinalReportState extends State<FinalReport> {
         Navigator.pushNamed(context, '/monthly_report');
       } else if (index == 2 && _statusManagement.studentStatus == 'Active') {
         Navigator.pushNamed(context, '/final_report');
-      } else if (index == 3) {
-        Navigator.pushNamed(context, '/details');
-      } else if (index == 4) {
-        Navigator.pushNamed(context, '/placements');
       }
     });
   }
@@ -170,15 +158,15 @@ class _FinalReportState extends State<FinalReport> {
   void initState() {
     super.initState();
     _statusManagement = StatusManagement();
-    title = TextEditingController(text: widget.title ?? '-');
-    drive = TextEditingController(text: widget.drive ?? '-');
-    date = TextEditingController(text: widget.date ?? '-');
-    fileName = TextEditingController(text: widget.fileName ?? '-');
-    status = TextEditingController(text: widget.status ?? '-');
   }
 
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context); 
+    studentData.deadlineDate = DateTime(2023, 12, 31); //SET DEADLINE
+    bool isEditAllowed =
+        DateTime.now().isBefore(studentData.deadlineDate ?? DateTime(2100));
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
@@ -194,14 +182,14 @@ class _FinalReportState extends State<FinalReport> {
           elevation: 0,
           systemOverlayStyle: SystemUiOverlayStyle.dark,
           iconTheme: const IconThemeData(
-            color: Color.fromRGBO(148, 112, 18, 1),
+            color: Color.fromRGBO(0, 146, 143, 10),
             size: 30,
           ),
           leading: Builder(
             builder: (BuildContext context) {
               return IconButton(
                 icon: const Icon(Icons.sort,
-                    color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+                    color: Color.fromRGBO(0, 146, 143, 10), size: 30),
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
                 },
@@ -227,127 +215,244 @@ class _FinalReportState extends State<FinalReport> {
                   child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 20),
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(children: [
-                              Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
+                      child: Consumer<Data>(
+                          builder: (context, reportsProvider, child) {
+                        return Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(children: [
+                                Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text('Report Title',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                  )),
+                                              _report(
+                                                  report:
+                                                      studentData.title.text),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              const Text('Status',
+                                                  style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54)),
+                                              _status(
+                                                  status: reportsProvider
+                                                      .statusFinal.text),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ]),
+                                const SizedBox(height: 20),
+                                Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('File',
+                                              style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54)),
+                                          _file(
+                                              file: reportsProvider
+                                                  .finalReportName.text)
+                                        ],
+                                      ),
+                                    ]),
+                                const SizedBox(height: 20),
+                                Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('Date',
+                                              style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54)),
+                                          _date(
+                                              submitDate: reportsProvider
+                                                  .dateinput.text),
+                                        ],
+                                      ),
+                                    ])
+                              ]),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              const Divider(
+                                thickness: 0.5,
+                              ),
+
+                              //Examiner
+                              Column(
+                                children: [
+                                  const SizedBox(
+                                    height: 8,
+                                  ),
+                                  const Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('Report Title',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                                )),
-                                            _report(report: title.text),
+                                        Text(
+                                          'Examiner',
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily: 'Futura',
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ]),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Colors.grey[50],
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Colors.black12,
+                                              blurRadius:
+                                                  2, // Adjust the blur radius as needed
+                                            )
                                           ],
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            const Text('Status',
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54)),
-                                            _status(status: status.text),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ]),
-                              const SizedBox(height: 20),
-                              Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text('File',
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54)),
-                                        _link(
-                                            link: fileName.text !=
-                                                    'No link Inserted'
-                                                ? drive.text
-                                                : drive.text),
-                                        _link(
-                                            link: fileName.text !=
-                                                    'No file Selected'
-                                                ? fileName.text
-                                                : drive.text)
-                                      ],
-                                    ),
-                                  ]),
-                              const SizedBox(height: 20),
-                              Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text('Date',
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54)),
-                                        _date(submitDate: date.text),
-                                      ],
-                                    ),
-                                  ])
-                            ]),
+                                          border: Border.all(
+                                              color: Colors.white, width: 7)),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const Text(
+                                                        'Examiner',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black54,
+                                                        ),
+                                                      ),
+                                                      _examiner(examiner: '-'),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: [
+                                                      const Text(
+                                                        'Status',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black54,
+                                                        ),
+                                                      ),
+                                                      _status(status: '-'),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    'Email',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
+                                                  _email(
+                                                      email: 'fatni@gmail.com'),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )),
+                                ],
+                              ),
 
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            const Divider(
-                              thickness: 0.5,
-                            ),
-
-                            //Examiner
-                            Column(
-                              children: [
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                const Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Examiner',
-                                        style: TextStyle(
-                                          color: Colors.black87,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          fontStyle: FontStyle.italic,
-                                          fontFamily: 'Futura',
+                              //Supervisor
+                              Column(
+                                children: [
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+                                  const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Supervisor',
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily: 'Futura',
+                                          ),
+                                          textAlign: TextAlign.left,
                                         ),
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ]),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 10),
-                                    decoration: BoxDecoration(
+                                      ]),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: Colors.grey[50],
                                         boxShadow: const [
@@ -358,246 +463,121 @@ class _FinalReportState extends State<FinalReport> {
                                           )
                                         ],
                                         border: Border.all(
-                                            color: Colors.white, width: 7)),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text(
-                                                      'Examiner',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54,
-                                                      ),
-                                                    ),
-                                                    _examiner(examiner: '-'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      'Status',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54,
-                                                      ),
-                                                    ),
-                                                    _status(status: '-'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 20),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Email',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
-                                                  ),
-                                                ),
-                                                _email(
-                                                    email: 'fatni@gmail.com'),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    )),
-                              ],
-                            ),
-
-                            //Supervisor
-                            Column(
-                              children: [
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                const Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Supervisor',
-                                        style: TextStyle(
-                                          color: Colors.black87,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          fontStyle: FontStyle.italic,
-                                          fontFamily: 'Futura',
-                                        ),
-                                        textAlign: TextAlign.left,
+                                            color: Colors.white, width: 7),
                                       ),
-                                    ]),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey[50],
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Colors.black12,
-                                          blurRadius:
-                                              2, // Adjust the blur radius as needed
-                                        )
-                                      ],
-                                      border: Border.all(
-                                          color: Colors.white, width: 7),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text(
-                                                      'Supervisor',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54,
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const Text(
+                                                        'Supervisor',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black54,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    _supervisor(supervisor: '${widget.supervisor}'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      'Status',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black54,
-                                                      ),
-                                                    ),
-                                                    _status(status: '-'),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 20),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  'Email',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
+                                                      _supervisor(
+                                                          supervisor:
+                                                              studentData
+                                                                  .svname.text),
+                                                    ],
                                                   ),
-                                                ),
-                                                _email(email: widget.supervisorEmail ?? 'No supervisor email'),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    )),
-                                const SizedBox(height: 20),
-                              ],
-                            ),
-
-                            Container(
-                                alignment: Alignment.bottomRight,
-                                child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Expanded(
-                                          child: ElevatedButton(
-                                        onPressed: () async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  FinalReportUpload(
-                                                initialTitle: title.text,
-                                                initialDrive: drive.text,
-                                                initialDate: date.text,
-                                                initialStatus: widget.status,
+                                                ],
                                               ),
-                                            ),
-                                          );
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: [
+                                                      const Text(
+                                                        'Status',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black54,
+                                                        ),
+                                                      ),
+                                                      _status(status: '-'),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    'Email',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
+                                                  _email(
+                                                      email: studentData
+                                                          .svemail.text),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )),
+                                  const SizedBox(height:100),
+                                ],
+                              ),
 
-                                          if (result != null) {
-                                            setState(() {
-                                              print(
-                                                  'Result from FinalReportUpload: $result');
-                                              fileName.text =
-                                                  result['fileName'] ?? '-';
-                                              title.text =
-                                                  result['title'] ?? '-';
-                                              drive.text =
-                                                  result['drive'] ?? '-';
-                                              date.text = result['date'] ?? '-';
-                                              status.text = 'Submitted';
-                                            });
-                                          }
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromRGBO(
-                                              148, 112, 18, 1),
-                                          minimumSize:
-                                              const Size.fromHeight(50),
-                                        ),
-                                        child: const Text(
-                                          'Edit',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ))
-                                    ])),
-                          ]))))),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Expanded(
+                                        child: ElevatedButton(
+                                      onPressed: isEditAllowed
+                                          ? () async {
+                                              await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const FinalReportUpload(),
+                                                ),
+                                              );
+                                            }
+                                          : null, // Disable button if editing is not allowed
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color.fromRGBO(
+                                                0, 146, 143, 10),
+                                        minimumSize:
+                                            const Size.fromHeight(50),
+                                      ),
+                                      child: const Text(
+                                        'Add Final Report',
+                                        style:
+                                            TextStyle(color: Colors.white),
+                                      ),
+                                    ))
+                                  ]),
+                            ]);
+                      }))))),
       bottomNavigationBar: BottomMenu(
         currentIndex: _currentIndex,
         onTap: onTabTapped,
@@ -605,10 +585,8 @@ class _FinalReportState extends State<FinalReport> {
           'Summary': '/summary',
           'Monthly Report': '/monthly_report',
           'Final Report': '/final_report',
-          'Details': '/details',
-          'Placements': '/placements',
         },
-        studentStatus: _statusManagement.studentStatus,
+        //studentStatus: _statusManagement.studentStatus,
       ),
     );
   }
