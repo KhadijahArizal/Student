@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:student/LayerTwo/summary.dart';
+import 'package:student/layerOne/announcement.dart';
 import 'package:student/layerOne/logo.dart';
 
 class AuthPage extends StatelessWidget {
@@ -18,9 +18,9 @@ class AuthPage extends StatelessWidget {
               );
             }
             if (snapshot.hasData) {
-              return const Summary();
+              return const Announcement();
             } else {
-              return SplashScreen();
+              return  SplashScreen();
             }
           }),
     );
