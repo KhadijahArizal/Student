@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
 import 'package:student/Service/auth_service.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
 import 'package:student/LayerTwo/Tab/emergency.dart';
@@ -64,13 +63,13 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(
-            size: 25,
+          icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black87.withOpacity(0.7), // Use the specified color
+            size: 25,
+            color: Color.fromRGBO(0, 146, 143, 10), // Use the specified color
           ),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushNamed(context, '/summary');
           },
         ),
         title: const Text(
@@ -85,7 +84,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         iconTheme: const IconThemeData(
-          color: Color.fromRGBO(148, 112, 18, 1),
+          color: Color.fromRGBO(0, 146, 143, 10),
           size: 30,
         ),
       ),
@@ -130,11 +129,12 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                             border: Border.all(
                                                 width: 10,
                                                 color: const Color.fromRGBO(
-                                                    148, 112, 18, 1)),
+                                                    0, 146, 143, 10)),
                                             color: const Color.fromRGBO(
-                                                148, 112, 18, 1)),
+                                                0, 146, 143, 10)),
                                         child: Column(children: [
                                           Stack(children: [
+                                            const SizedBox(height: 10),
                                             Container(
                                               alignment: Alignment.topCenter,
                                               width: 130,
@@ -186,7 +186,7 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                               unselectedLabelColor:
                                                   Colors.white,
                                               labelColor: const Color.fromRGBO(
-                                                  148, 112, 18, 1),
+                                                  0, 146, 143, 10),
                                               indicatorColor: Colors.white,
                                               indicatorWeight: 0.0,
                                               indicatorSize:
@@ -215,22 +215,8 @@ class _DetailsState extends State<Details> with SingleTickerProviderStateMixin {
                                         child: TabBarView(
                                           controller: tabController,
                                           children: const [
-                                            // PERSONAL
-                                            Student(
-                                              contact: '-',
-                                              address: '-',
-                                              ic: '-',
-                                              citizenship: '-',
-                                              initialMatric: '-',
-                                            ),
-
-                                            // EMERGENCY
-                                            Emergency(
-                                              ename: '-',
-                                              relationship: '-',
-                                              eaddress: '-',
-                                              econtact: '-',
-                                            ),
+                                            Student(),
+                                            Emergency(),
                                           ],
                                         ),
                                       )
