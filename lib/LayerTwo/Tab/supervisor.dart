@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'package:student/LayerTwo/Tab/edit/supervisorForm.dart';
 
 class Supervisor extends StatefulWidget {
@@ -7,11 +9,9 @@ class Supervisor extends StatefulWidget {
     this.supervisor,
     this.email,
     this.contact,
-    required this.onSupervisorChanged,
   }) : super(key: key);
 
   final String? email, contact, supervisor;
-  final Function(String supervisor, String email) onSupervisorChanged;
 
   @override
   _SupervisorState createState() => _SupervisorState();
@@ -49,60 +49,44 @@ class _SupervisorState extends State<Supervisor> {
 
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return SingleChildScrollView(
         child: Container(
             color: Colors.white.withOpacity(0.1),
             padding: const EdgeInsets.all(40),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 20),
-              _buildDetail('Supervisor', supervisor.text),
-              _buildDetail('Email', email.text),
-              _buildDetail('Contact No', contact.text),
-              const SizedBox(height: 50),
-              Container(
-                  child: Row(children: [
-                Expanded(
-                    child: ElevatedButton.icon(
-                  onPressed: () async {
-                    Map<String, dynamic> result;
-                    result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SupervisorForm(
-                          initialSupervisor: supervisor.text,
-                          initialEmail: email.text,
-                          initialContact: contact.text,
-                          onSupervisorChanged: (newSupervisor, newEmail) {
-                            setState(() {
-                              supervisor.text = newSupervisor;
-                              email.text = newEmail;
-                            });
-
-                            widget.onSupervisorChanged(newSupervisor, newEmail);
-                          },
+            child: Consumer<Data>(builder: (context, Data, child) {
+              return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetail('Supervisor', studentData.svname.text),
+                    _buildDetail('Email', studentData.svemail.text),
+                    _buildDetail('Contact No', studentData.svcontact.text),
+                    const SizedBox(height: 70),
+                    Row(children: [
+                      Expanded(
+                          child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SupervisorForm(
+                                        initialSupervisor: supervisor.text,
+                                        initialEmail: email.text,
+                                        initialContact: contact.text,
+                                      )));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color.fromRGBO(0, 146, 143, 10),
+                          minimumSize: const Size.fromHeight(50),
                         ),
-                      ),
-                    );
-
-                    setState(() {
-                      print('Result: $result');
-                      //print(widget.supervisor!);
-                      supervisor.text = result['supervisor'] ?? '-';
-                      email.text = result['email'] ?? '-';
-                      contact.text = result['contact'] ?? '-';
-                    });
-                                    },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                    minimumSize: const Size.fromHeight(50),
-                  ),
-                  icon: const Icon(Icons.edit_rounded,
-                      color: Colors.white), // Icon data for elevated button
-                  label:
-                      const Text("Edit", style: TextStyle(color: Colors.white)),
-                )),
-              ])),
-            ])));
+                        icon:
+                            const Icon(Icons.edit_rounded, color: Colors.white),
+                        label: const Text("Edit",
+                            style: TextStyle(color: Colors.white)),
+                      )),
+                    ]),
+                  ]);
+            })));
   }
 }
