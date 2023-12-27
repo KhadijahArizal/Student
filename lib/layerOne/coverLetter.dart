@@ -1,63 +1,108 @@
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
+//import 'package:pdf/widgets.dart' as pw;
+import 'package:student/Service/auth_service.dart';
 
 class CoverLetter extends StatefulWidget {
-  const CoverLetter({Key? key, required String title}) : super(key: key);
+  const CoverLetter(
+      {Key? key, required String title, this.initialStart, this.initialEnd})
+      : super(key: key);
 
+  final String? initialStart, initialEnd;
   @override
   _CoverLetterState createState() => _CoverLetterState();
 }
 
 class _CoverLetterState extends State<CoverLetter> {
-  TextEditingController start = TextEditingController();
-  TextEditingController end = TextEditingController();
-  DateTime selectedDate = DateTime.now();
+  User? user = FirebaseAuth.instance.currentUser;
+  AuthService authService = AuthService();
+  late Data studentData;
+  Data clDate = Data();
 
-  DateTime? startDate;
-  DateTime? endDate;
+/*
+  Future<Uint8List> generatePdf() async {
+    final pdf = pw.Document();
 
-  Widget _name({required String name}) => Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(name,
-                style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 15,
-                    fontFamily: 'Futura',
-                    fontWeight: FontWeight.bold))
-          ],
-        ),
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Name: ${user?.displayName}'),
+              pw.Text('Matric No: ${studentData.matric.text}'),
+              pw.Text('Start Date: ${clDate.clStart.text}'),
+              pw.Text('End Date: ${clDate.clEnd.text}'),
+              // Add more details as needed
+            ],
+          );
+        },
+      ),
+    );
+    return pdf.save();
+  }
+
+  Future<void> savePdf(Uint8List pdfBytes) async {
+    try {
+      // Save PDF to a file and open it
+      // You can customize the file name and location
+      final result = await FileSaveHelper.saveAndOpenFile(
+        pdfBytes,
+        'cover letter_${user?.displayName}_${DateTime.now().toLocal()}',
+        'pdf',
       );
 
-  Widget _matricNo({required String matricNo}) => Container(
-        child: Column(
-          children: [
-            Text(
-              matricNo,
+      if (result) {
+        print('PDF saved successfully.');
+      } else {
+        print('Error saving PDF.');
+      }
+    } catch (e) {
+      print('Error saving or opening file: $e');
+    }
+  }
+*/
+  @override
+  void initState() {
+    super.initState();
+    clDate = Provider.of<Data>(context, listen: false);
+    clDate.clStart.text = widget.initialStart ?? '-';
+    clDate.clEnd.text = widget.initialEnd ?? '-';
+    studentData = Provider.of<Data>(context, listen: false);
+  }
+
+  Widget _name({required String name}) => Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(name,
               style: const TextStyle(
                   color: Colors.black87,
                   fontSize: 15,
                   fontFamily: 'Futura',
-                  fontWeight: FontWeight.bold),
-            )
-          ],
-        ),
+                  fontWeight: FontWeight.bold))
+        ],
       );
 
-  Future<void> _startDate(BuildContext context) async {
-    final DateTime? spicked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2023),
-        lastDate: DateTime(2040));
-    if (spicked != null && spicked != selectedDate) {
-      setState(() {
-        selectedDate = spicked;
-      });
-    }
-  }
+  Widget _matricNo({required String matricNo}) => Column(
+        children: [
+          Text(
+            matricNo,
+            style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+                fontWeight: FontWeight.bold),
+          )
+        ],
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +110,11 @@ class _CoverLetterState extends State<CoverLetter> {
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
             leading: IconButton(
-              icon: Icon(
-                size: 25,
+              icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
+                size: 25,
                 color:
-                    Colors.black87.withOpacity(0.7), // Use the specified color
+                    Color.fromRGBO(0, 146, 143, 10), // Use the specified color
               ),
               onPressed: () {
                 Navigator.pop(context);
@@ -87,7 +132,7 @@ class _CoverLetterState extends State<CoverLetter> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-              color: Color.fromRGBO(148, 112, 18, 1),
+              color: Color.fromRGBO(0, 146, 143, 10),
               size: 30,
             )),
         body: SafeArea(
@@ -108,179 +153,202 @@ class _CoverLetterState extends State<CoverLetter> {
                   child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 20),
-                      child: Column(children: [
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Name',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black54,
-                                          )),
-                                      _name(name: 'Zahra Fathanah'),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      const Text('Matric No',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black54)),
-                                      _matricNo(matricNo: '2019050'),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ]),
-                        const Divider(),
-                        const SizedBox(height: 10),
-                        Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Start Date',
-                                style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 14,
-                                    fontFamily: 'Futura'),
-                              ),
-                              const SizedBox(height: 5),
-                              TextFormField(
-                                controller: start,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      width: 0,
-                                      style: BorderStyle.none,
-                                    ),
-                                  ),
-                                  fillColor: Colors.grey[100],
-                                  filled: true,
-                                  prefixIcon: const Icon(Icons.calendar_today),
-                                  labelText: 'Start Date',
-                                ),
-                                onTap: () async {
-                                  DateTime? pickedDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2101),
-                                  );
-
-                                  if (pickedDate != null &&
-                                      pickedDate != startDate) {
-                                    setState(() {
-                                      startDate = pickedDate;
-                                      start.text = DateFormat('dd MMMM yyyy')
-                                          .format(pickedDate);
-                                    });
-                                  }
-                                },
-                              ),
-                            ]),
-                        const SizedBox(height: 15),
-                        Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'End Date',
-                                style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 14,
-                                    fontFamily: 'Futura'),
-                              ),
-                              const SizedBox(height: 5),
-                              TextFormField(
-                                controller: end,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      width: 0,
-                                      style: BorderStyle.none,
-                                    ),
-                                  ),
-                                  fillColor: Colors.grey[100],
-                                  filled: true,
-                                  prefixIcon: const Icon(Icons.calendar_today),
-                                  labelText: 'End Date',
-                                ),
-                                onTap: () async {
-                                  DateTime? pickedDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: startDate ?? DateTime.now(),
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2101),
-                                  );
-
-                                  if (pickedDate != null &&
-                                      pickedDate != endDate) {
-                                    setState(() {
-                                      endDate = pickedDate;
-                                      end.text = DateFormat('dd MMMM yyyy')
-                                          .format(pickedDate);
-                                    });
-                                  }
-                                },
-                              ),
-                            ]),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: Tooltip(
-                                message: '',
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                      child: Consumer<Data>(builder: (context, clDate, child) {
+                        return Column(children: [
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        showIns(context);
-                                      },
-                                      child: const Icon(
-                                        Icons.info,
-                                        size: 30,
-                                        color: Color.fromRGBO(148, 112, 18, 1),
-                                      ),
-                                    )
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Name',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.black54,
+                                            )),
+                                        _name(name: '${user?.displayName}'),
+                                      ],
+                                    ),
                                   ],
                                 ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        const Text('Matric No',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black54)),
+                                        _matricNo(
+                                            matricNo: studentData.matric.text),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ]),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 5),
+                                TextFormField(
+                                  key: UniqueKey(),
+                                  readOnly: true,
+                                  controller: clDate.clStart,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    fillColor: Colors.grey[100],
+                                    filled: true,
+                                    prefixIcon:
+                                        const Icon(Icons.calendar_today),
+                                    labelText: 'Start Date',
+                                  ),
+                                  onTap: () async {
+                                    DateTime? pickedDate = await showDatePicker(
+                                      context: context,
+                                      initialDate:
+                                          clDate.clStartDate ?? DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2101),
+                                    );
+
+                                    if (pickedDate != null &&
+                                        (clDate.clStartDate == null ||
+                                            pickedDate.isAfter(
+                                                clDate.clStartDate!))) {
+                                      setState(() {
+                                        clDate.clStartDate = pickedDate;
+                                        clDate.clStart.text =
+                                            DateFormat('dd MMMM yyyy')
+                                                .format(pickedDate);
+                                      });
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+                                // End Date Picker
+                                TextFormField(
+                                  key: UniqueKey(),
+                                  readOnly: true,
+                                  controller: clDate.clEnd,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    fillColor: Colors.grey[100],
+                                    filled: true,
+                                    prefixIcon:
+                                        const Icon(Icons.calendar_today),
+                                    labelText: 'End Date',
+                                  ),
+                                  onTap: () async {
+                                    DateTime? pickedDate = await showDatePicker(
+                                      context: context,
+                                      initialDate:
+                                          clDate.clEndDate ?? DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2101),
+                                    );
+
+                                    if (pickedDate != null &&
+                                        (clDate.clEndDate == null ||
+                                            pickedDate
+                                                .isAfter(clDate.clEndDate!))) {
+                                      setState(() {
+                                        clDate.clEndDate = pickedDate;
+                                        clDate.clEnd.text =
+                                            DateFormat('dd MMMM yyyy')
+                                                .format(pickedDate);
+                                      });
+                                    }
+                                  },
+                                ),
+                              ]),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      showIns(context);
+                                    },
+                                    child: const Icon(
+                                      Icons.info,
+                                      size: 30,
+                                      color: Color.fromRGBO(0, 146, 143, 10),
+                                    ),
+                                  ))
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            children: [
+                              Expanded(
+                                // Wrap with Expanded
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    User? user =
+                                        FirebaseAuth.instance.currentUser;
+
+                                    if (user != null) {
+                                      String userId = user.uid;
+
+                                      DatabaseReference userRef =
+                                          FirebaseDatabase.instance
+                                              .ref('Student')
+                                              .child('Cover Letter')
+                                              .child(userId);
+
+                                      userRef.set({
+                                        'Student Name':
+                                            studentData.iapname.text,
+                                        'Start Date': clDate.clStart.text,
+                                        'End Date': clDate.clEnd.text,
+                                      });
+                                    }
+                                    //Uint8List pdfBytes = await generatePdf();
+                                    //await savePdf(pdfBytes);
+
+                                    send(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        const Color.fromRGBO(0, 146, 143, 10),
+                                    // maximumSize is deprecated, use fixedSize with width and height
+                                    fixedSize: const Size.fromHeight(50),
+                                  ),
+                                  icon: const Icon(Icons.email,
+                                      color: Colors.white),
+                                  label: const Text(
+                                    "Request",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
                               ),
-                            )
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-                        Container(
-                            alignment: Alignment.bottomRight,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                send();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      const Color.fromRGBO(148, 112, 18, 1),
-                                  minimumSize: const Size.fromHeight(50)),
-                              icon: const Icon(
-                                  Icons.email, color: Colors.white), //icon data for elevated button
-                              label: const Text("Request", style: TextStyle(color: Colors.white),), //label text
-                            ))
-                      ])))),
+                            ],
+                          )
+                        ]);
+                      })))),
         ));
   }
 
@@ -386,19 +454,24 @@ class _CoverLetterState extends State<CoverLetter> {
             ),
           ]),
           actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
           ],
         );
       },
     );
   }
 
-  void send() {
+  void send(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -424,7 +497,7 @@ class _CoverLetterState extends State<CoverLetter> {
                     'Thank You',
                     textAlign: TextAlign.center, //<-- Center text here
                     style: TextStyle(
-                      color: Color.fromRGBO(148, 112, 18, 1),
+                      color: Color.fromRGBO(0, 146, 143, 10),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Futura',
@@ -435,7 +508,7 @@ class _CoverLetterState extends State<CoverLetter> {
                   padding: EdgeInsets.only(bottom: 10, left: 20, right: 20),
                   child: Text(
                     'Please check your Email for the requested cover letter',
-                    textAlign: TextAlign.center, //<-- Center text here
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.black87,
                       fontSize: 15,
@@ -449,25 +522,44 @@ class _CoverLetterState extends State<CoverLetter> {
           actions: [
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                ),
-                child: const Text(
-                  'Ok',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Futura',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/summary');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
                   ),
-                ),
-              ),
+                  child: const Text(
+                    'Ok',
+                    style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                  )),
             ),
             const SizedBox(height: 10),
           ],
         );
       },
     );
+  }
+}
+
+class FileSaveHelper {
+  static Future<bool> saveAndOpenFile(
+    Uint8List bytes,
+    String fileName,
+    String fileType,
+  ) async {
+    try {
+      // Save file to device
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/$fileName.$fileType');
+      await file.writeAsBytes(bytes);
+
+      // Open the file using a file explorer or another app
+      OpenFile.open(file.path);
+
+      return true;
+    } catch (e) {
+      print('Error saving or opening file: $e');
+      return false;
+    }
   }
 }
