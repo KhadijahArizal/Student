@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 
 class SupervisorForm extends StatefulWidget {
   const SupervisorForm({
@@ -8,46 +11,30 @@ class SupervisorForm extends StatefulWidget {
     this.initialSupervisor,
     this.initialEmail,
     this.initialContact,
-    required this.onSupervisorChanged,
   }) : super(key: key);
 
   final String? initialSupervisor, initialEmail, initialContact;
-  final Function(String newSupervisor, String newEmail) onSupervisorChanged;
   @override
   _SupervisorFormState createState() => _SupervisorFormState();
 }
 
 class _SupervisorFormState extends State<SupervisorForm> {
   final _formKey = GlobalKey<FormState>();
-  final supervisor = TextEditingController();
-  late TextEditingController email = TextEditingController();
-  final TextEditingController contact = TextEditingController();
-  late DatabaseReference supervisordb;
+  TextEditingController svname = TextEditingController();
+  TextEditingController svemail = TextEditingController();
+  TextEditingController svcontact = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    supervisordb = FirebaseDatabase.instance.ref('Supervisor Details');
-      supervisor.text = widget.initialSupervisor ?? '-';
-      email.text = widget.initialEmail ?? '-';
-      contact.text = widget.initialContact ?? '-';
-    
-  }
-
-  void goSupervisor() {
-    widget.onSupervisorChanged(
-      supervisor.text, //'${widget.initialSupervisor}',
-      email.text,
-    );
-    Navigator.pop(context, {
-      'supervisor': supervisor.text,
-      'email': email.text,
-      'contact': contact.text
-    });
+    svname.text = widget.initialSupervisor ?? '-';
+    svemail.text = widget.initialEmail ?? '-';
+    svcontact.text = widget.initialContact ?? '-';
   }
 
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
@@ -73,7 +60,7 @@ class _SupervisorFormState extends State<SupervisorForm> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-                color: Color.fromRGBO(148, 112, 18, 1), size: 30)),
+                color: Color.fromRGBO(0, 146, 143, 10), size: 30)),
         body: SafeArea(
             child: Container(
                 padding: const EdgeInsets.all(20),
@@ -92,103 +79,114 @@ class _SupervisorFormState extends State<SupervisorForm> {
                     child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: Form(
-                                key: _formKey,
-                                child: Column(children: [
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        supervisor.text = value;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.person_rounded),
-                                      labelText: 'Supervisor Name',
+                  child: Consumer<Data>(builder: (context, Data, child) {
+                    return Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: Form(
+                                  key: _formKey,
+                                  child: Column(children: [
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.svname,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon:
+                                            const Icon(Icons.person_rounded),
+                                        labelText: 'Supervisor Name',
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        email.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.emailAddress,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.email_rounded),
-                                      labelText: 'Email',
+                                    const SizedBox(height: 20),
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.svemail,
+                                      keyboardType: TextInputType.emailAddress,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon:
+                                            const Icon(Icons.email_rounded),
+                                        labelText: 'Email',
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        contact.text = value;
-                                      });
-                                    },
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none)),
-                                      fillColor: Colors.grey[100],
-                                      filled: true,
-                                      prefixIcon:
-                                          const Icon(Icons.call_rounded),
-                                      labelText: 'Contact No',
+                                    const SizedBox(height: 20),
+                                    TextFormField(
+                                      key: UniqueKey(),
+                                      controller: studentData.svcontact,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none)),
+                                        fillColor: Colors.grey[100],
+                                        filled: true,
+                                        prefixIcon:
+                                            const Icon(Icons.call_rounded),
+                                        labelText: 'Contact No',
+                                      ),
                                     ),
-                                  ),
-                                ]))),
-                        const SizedBox(height: 25),
-                        Container(
-                            alignment: Alignment.bottomRight,
-                            child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Expanded(
-                                      child: ElevatedButton(
-                                    onPressed: () {
-                                      supervisordb.set({
-                                        'supervisor': supervisor.text,
-                                        'Email':email.text,
-                                        'Contact No': contact.text
-                                      });
-                                      goSupervisor();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color.fromRGBO(
-                                            148, 112, 18, 1),
-                                        minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save',style: TextStyle(color: Colors.white)),
-                                  ))
-                                ]))
-                      ]),
+                                  ]))),
+                          const SizedBox(height: 25),
+                          Container(
+                              alignment: Alignment.bottomRight,
+                              child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Expanded(
+                                        child: ElevatedButton(
+                                      onPressed: () {
+                                        User? user =
+                                            FirebaseAuth.instance.currentUser;
+
+                                        if (user != null) {
+                                          String userId = user.uid;
+                                          DatabaseReference userRef =
+                                              FirebaseDatabase.instance
+                                                  .ref('Student')
+                                                  .child('Supervisor Details')
+                                                  .child(userId);
+
+                                          userRef.set({
+                                            'Supervisor Name':
+                                                studentData.svname.text,
+                                            'Contact No':
+                                                studentData.svcontact.text,
+                                            'Email': studentData.svemail.text,
+                                          });
+                                          Navigator.pushNamed(
+                                              context, '/placements');
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromRGBO(
+                                              0, 146, 143, 10),
+                                          minimumSize:
+                                              const Size.fromHeight(50)),
+                                      child: const Text('Save',
+                                          style:
+                                              TextStyle(color: Colors.white)),
+                                    ))
+                                  ]))
+                        ]);
+                  }),
                 )))));
   }
 }
