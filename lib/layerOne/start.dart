@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:student/layerOne/passphrase.dart';
+import 'package:student/SignIn/SignIn.dart';
 
 class Start extends StatefulWidget {
   const Start({Key? key}) : super(key: key);
@@ -65,13 +65,16 @@ class _StartState extends State<Start> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const Passphrase(),
+                            builder: (context) => const SignIn(),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                        backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(100),
+                        ),
                       ),
                       child: const Text(
                         'Start',
