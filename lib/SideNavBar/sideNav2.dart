@@ -1,22 +1,34 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:student/LayerTwo/Detect%20Status/statusManagament.dart';
 import 'package:student/LayerTwo/faq.dart';
 import 'package:student/LayerTwo/placements.dart';
 import 'package:student/LayerTwo/help.dart';
 import 'package:student/Service/auth_service.dart';
-import 'package:student/SignIn/SignIn.dart';
 import '../layerOne/coverLetter.dart';
 
 void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false));
 
+  bool _isVisible = false;
+  String _status = '';
+
+
 class sideNav2 extends StatelessWidget {
   final String studentStatus;
+  final StatusManagement _statusManagement;
 
-  const sideNav2({required this.studentStatus});
-
+  sideNav2({super.key, required this.studentStatus}) : _statusManagement = StatusManagement();
+  
   @override
   Widget build(BuildContext context) {
     final AuthService authService = AuthService();
+
+     _statusManagement.statusStream.listen((String status) {
+       _status = status;
+        _isVisible = (status == 'Active');
+    });
+
     return Drawer(
       backgroundColor: Colors.white,
       child: Material(
@@ -60,11 +72,10 @@ class sideNav2 extends StatelessWidget {
             const SizedBox(
               height: 10,
             ),
-            Visibility(
-                child: buildMenuItem(
+            buildMenuItem(
                     text: 'Placements',
                     icon: Icons.place_rounded,
-                    onClicked: (() => selectedItem(context, 1)))),
+                    onClicked: (() => selectedItem(context, 1))),
             const SizedBox(
               height: 10,
             ),
@@ -91,19 +102,12 @@ class sideNav2 extends StatelessWidget {
               onClicked: () async {
                 try {
                   await authService.handleSignOut();
-                  // Navigate to the sign-in page or any other desired page after logout
-                  Navigator.of(context).pop(); // Close the drawer
-                  // Navigate to the sign-in page or any other desired page after logout
-                  // For example, you can use Navigator to go to the sign-in page:
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) =>
-                        SignIn(), // Replace with your sign-in page
-                  ));
-                  // Display the success message
+                  Navigator.of(context).pop();
+                  Navigator.pushNamed(context, '/signIn');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('YEAYY! Logout'),
-                      duration: const Duration(seconds: 2),
+                    const SnackBar(
+                      content: Text('YEAYY! Logout'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 } catch (e) {
@@ -122,7 +126,7 @@ class sideNav2 extends StatelessWidget {
     return ListTile(
         leading: Icon(
           icon,
-          color: const Color.fromRGBO(0, 168, 80, 10),
+          color: const Color.fromRGBO(0, 146, 143, 10),
         ),
         title: Text(
           text,
