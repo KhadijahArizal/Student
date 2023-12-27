@@ -1,12 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 class EmergencyForm extends StatefulWidget {
-  final String? initialEname;
-  final String? initialRelationship;
-  final String? initialEcontact;
-  final String? initialEaddress;
-
   const EmergencyForm({
     Key? key,
     this.initialEname,
@@ -14,6 +12,8 @@ class EmergencyForm extends StatefulWidget {
     this.initialEcontact,
     this.initialEaddress,
   }) : super(key: key);
+
+    final String? initialEname,initialRelationship,initialEcontact,initialEaddress;
 
   @override
   _EmergencyFormState createState() => _EmergencyFormState();
@@ -25,31 +25,19 @@ class _EmergencyFormState extends State<EmergencyForm> {
   TextEditingController relationship = TextEditingController();
   TextEditingController econtact = TextEditingController();
   TextEditingController eaddress = TextEditingController();
-  late DatabaseReference emergencydb;
 
   @override
   void initState() {
     super.initState();
-    emergencydb = FirebaseDatabase.instance.ref('Emergency Details');
-    if (widget.initialEname != null) {
-      ename.text = widget.initialEname!;
-      relationship.text = widget.initialRelationship ?? '';
-      econtact.text = widget.initialEcontact ?? '';
-      eaddress.text = widget.initialEaddress ?? '';
-    }
-  }
-
-  void GoEmergency() {
-    Navigator.pop(context, {
-      'ename': ename.text,
-      'relationship': relationship.text,
-      'econtact': econtact.text,
-      'eaddress': eaddress.text,
-    });
+    ename.text = widget.initialEname!;
+      relationship.text = widget.initialRelationship ?? '-';
+      econtact.text = widget.initialEcontact ?? '-';
+      eaddress.text = widget.initialEaddress ?? '-';
   }
 
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
@@ -75,7 +63,7 @@ class _EmergencyFormState extends State<EmergencyForm> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-                color: Color.fromRGBO(148, 112, 18, 1), size: 30)),
+                color: Color.fromRGBO(0, 146, 143, 10), size: 30)),
         body: SafeArea(
             child: Container(
                 padding: const EdgeInsets.all(20),
@@ -94,7 +82,10 @@ class _EmergencyFormState extends State<EmergencyForm> {
                     child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
+                  child: 
+                  Consumer<Data>(
+                    builder: (context, Data, child) {
+                      return Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
@@ -103,11 +94,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                 key: _formKey,
                                 child: Column(children: [
                                   TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        ename.text = value;
-                                      });
-                                    },
+                                     key: UniqueKey(),
+                              controller: studentData.ename,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                           borderRadius:
@@ -124,11 +112,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   ),
                                   const SizedBox(height: 20),
                                   TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        relationship.text = value;
-                                      });
-                                    },
+                                    key: UniqueKey(),
+                              controller: studentData.relationship,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                           borderRadius:
@@ -145,11 +130,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   ),
                                   const SizedBox(height: 20),
                                   TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        econtact.text = value;
-                                      });
-                                    },
+                                    key: UniqueKey(),
+                              controller: studentData.econtact,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
@@ -167,11 +149,8 @@ class _EmergencyFormState extends State<EmergencyForm> {
                                   ),
                                   const SizedBox(height: 20),
                                   TextFormField(
-                                    onChanged: (value) {
-                                      setState(() {
-                                        eaddress.text = value;
-                                      });
-                                    },
+                                   key: UniqueKey(),
+                              controller: studentData.eaddress,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                           borderRadius:
@@ -193,25 +172,46 @@ class _EmergencyFormState extends State<EmergencyForm> {
                             child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
+                                  
                                   Expanded(
                                       child: ElevatedButton(
-                                    onPressed: () {
-                                      emergencydb.set({
-                                'Emergency Contact Name': ename.text,
-                                'Relationship': relationship.text,
-                                'Contact No': econtact.text,
-                                'Home Address': eaddress.text,
-                              });
-                                      GoEmergency();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color.fromRGBO(
-                                            148, 112, 18, 1),
-                                        minimumSize: const Size.fromHeight(50)),
-                                    child: const Text('Save',style: TextStyle(color: Colors.white)),
-                                  ))
+                                        onPressed: () {
+                                          User? user =
+                                              FirebaseAuth.instance.currentUser;
+
+                                          if (user != null) {
+                                            String userId = user.uid;
+
+                                            DatabaseReference userRef =
+                                                FirebaseDatabase.instance
+                                                    .ref('Student')
+                                                    .child('Emergency Details')
+                                                    .child(userId);
+
+                                            userRef.set({
+                                              
+                                              'Name': studentData.ename.text,
+                                              'Relationship': studentData.econtact.text,
+                                              'Emergency Contact Person':
+                                                  studentData.econtact.text,
+                                              'Home Address':
+                                                  studentData.eaddress.text,
+                                            });
+                                            Navigator.pushNamed(context, '/details');
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    0, 146, 143, 10),
+                                            minimumSize:
+                                                const Size.fromHeight(50)),
+                                        child: const Text('Save',
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ))
                                 ]))
-                      ]),
+                      ]);}),
                 )))));
   }
 }
