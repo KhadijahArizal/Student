@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 
 class Student extends StatefulWidget {
   const Student(
@@ -11,7 +13,6 @@ class Student extends StatefulWidget {
       this.address,
       this.ic,
       this.citizenship,
-      this.major,
       this.initialMatric})
       : super(key: key);
 
@@ -21,7 +22,6 @@ class Student extends StatefulWidget {
       address,
       ic,
       citizenship,
-      major,
       initialMatric;
 
   @override
@@ -72,6 +72,31 @@ class _studentState extends State<Student> {
     );
   }
 
+  Widget _buildDetailS(String label, String salutation, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+          Text(
+          salutation,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+        const SizedBox(width: 5),
+          Text(
+          value,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        )]),
+        const SizedBox(height: 50),
+      ],
+    );
+  }
+
   Widget _buildDetail2(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -92,79 +117,75 @@ class _studentState extends State<Student> {
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
+    var studentData = Provider.of<Data>(context);
     return SingleChildScrollView(
       child: Container(
         color: Colors.white.withOpacity(0.1),
         padding: const EdgeInsets.all(40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Name', '${user?.displayName}'),
-              _buildDetail2('Matric No', '${widget.initialMatric}')
-            ]),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Email', '${user?.email}'),
-              _buildDetail2('Major', dropdownValueMajor)
-            ]),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('Contact No', contact.text),
-              _buildDetail2('Current Address', address.text),
-            ]),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _buildDetail('IC/Passport No', ic.text),
-              _buildDetail2('Citizenship', citizenship.text)
-            ]),
-            const SizedBox(height: 70),
-            Container(
-                child: Row(children: [
-              Expanded(
-                  child: ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => studentForm(
-                        initialBr: dropDownValueBr,
-                        initialName: name.text,
-                        initialEmail: email.text,
-                        initialContact: contact.text,
-                        initialAddress: address.text,
-                        initialIc: ic.text,
-                        initialCitizenship: citizenship.text,
-                        initialMajor: dropdownValueMajor,
-                        matric: '',
-                      ),
+        child: Consumer<Data>(
+          builder: (context, Data, child) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildDetailS('Name', dropdownValueSalutation, '${user?.displayName}'),
+                      _buildDetail2('Matric No', studentData.matric.text)
+                    ]),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildDetail('Email', '${user?.email}'),
+                      _buildDetail2('Major', dropdownValueMajor)
+                    ]),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildDetail('Contact No', studentData.contact.text),
+                      _buildDetail2(
+                          'Current Address', studentData.address.text),
+                    ]),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildDetail('IC/Passport No', studentData.ic.text),
+                      _buildDetail2('Citizenship', studentData.citizenship.text)
+                    ]),
+                const SizedBox(height: 70),
+                Row(children: [
+                  Expanded(
+                      child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => studentForm(
+                            initialSalutation: dropdownValueSalutation,
+                            initialName: name.text,
+                            initialEmail: email.text,
+                            initialMatric: matric.text,
+                            initialContact: contact.text,
+                            initialAddress: address.text,
+                            initialIc: ic.text,
+                            initialCitizenship: citizenship.text,
+                            initialMajor: dropdownValueMajor,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                      minimumSize: const Size.fromHeight(50),
                     ),
-                  );
-
-                  if (result != null) {
-                    setState(() {
-                      print('Result: $result');
-                      dropDownValueBr = result['br'] ?? '-';
-                      name.text = result['name'] ?? '-';
-                      email.text = result['email'] ?? '-';
-                      matric.text = result['matric'] ?? '-';
-                      contact.text = result['contact'] ?? '-';
-                      address.text = result['address'] ?? '-';
-                      ic.text = result['ic'] ?? '-';
-                      citizenship.text = result['citizenship'] ?? '-';
-                      dropdownValueMajor = result['major'] ?? '-';
-                    });
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
-                  minimumSize: const Size.fromHeight(50),
-                ),
-                icon: const Icon(Icons.edit_rounded,
-                    color: Colors.white), // Icon data for elevated button
-                label:
-                    const Text("Edit", style: TextStyle(color: Colors.white)),
-              ))
-            ])),
-          ],
+                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                    label: const Text("Edit",
+                        style: TextStyle(color: Colors.white)),
+                  ))
+                ]),
+              ],
+            );
+          },
         ),
       ),
     );
