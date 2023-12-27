@@ -1,8 +1,15 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 
 class FinalReportUpload extends StatefulWidget {
   const FinalReportUpload({
@@ -23,13 +30,11 @@ class FinalReportUpload extends StatefulWidget {
 
 class _FinalReportUploadState extends State<FinalReportUpload> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _fileNameController;
   TextEditingController title = TextEditingController();
-  TextEditingController drive = TextEditingController();
-  TextEditingController dateinput = TextEditingController();
-  late TextEditingController _statusController;
+  String selectedFileFinal = '';
   DateTime selectedDate = DateTime.now();
-  String? selectedFilePath;
+  late TextEditingController finalReportName;
+  bool _isUploading = false;
 
   String? _validateField(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
@@ -38,19 +43,17 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
     return null;
   }
 
-  //RealtimeDatabase
-  final finaldb = FirebaseDatabase.instance.ref('Final Report');
-  
   @override
   void initState() {
     super.initState();
-    _fileNameController = TextEditingController(text: "-");
+    finalReportName = TextEditingController(text: "-");
     title.text = widget.initialTitle ?? '-';
-    drive.text = widget.initialDrive ?? '-';
-    dateinput.text = widget.initialDate ?? '-';
-    _statusController = TextEditingController(text: "-");
-    selectedDate = DateTime.now();
-    dateinput.text = DateFormat('dd MMMM yyyy').format(selectedDate);
+    Data reportsProvider = Provider.of<Data>(context, listen: false);
+    reportsProvider.statusFinal.text = 'Submitted';
+    reportsProvider.dateinput.text =
+        DateFormat('dd MMMM yyyy').format(DateTime.now());
+    reportsProvider.monthController.text =
+        DateFormat('MMMM').format(DateTime.now());
   }
 
   Widget _File({
@@ -59,56 +62,64 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
     return GestureDetector(
       onTap: onTap,
       child: const Icon(Icons.file_present_rounded,
-          size: 28, color: Color.fromRGBO(148, 112, 18, 1)),
-    );
-  }
-
-  Widget _Cam({
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: const Icon(Icons.camera_alt_rounded,
-          size: 28, color: Color.fromRGBO(148, 112, 18, 1)),
+          size: 28, color: Color.fromRGBO(0, 146, 143, 10)),
     );
   }
 
   void _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      setState(() {
+        _isUploading = true;
+      });
 
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
       if (result != null && result.files.isNotEmpty) {
-        PlatformFile file = result.files.first;
-        print('Selected file: ${file.name}');
+        User? user = FirebaseAuth.instance.currentUser;
 
+        if (user != null) {
+          String userId = user.uid;
+
+          // Upload file to Firebase Storage
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('Final Report/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            // Retrieve download URL
+            String fileDownloadURL = await storageReference.getDownloadURL();
+
+            // Update selected file name
+            setState(() {
+              finalReportName.text = fileName;
+              selectedFileFinal = fileDownloadURL;
+              _isUploading = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _fileNameController.text = result.files.first.name;
+          _isUploading =
+              false; // Set loading state to false if picking is canceled
         });
-
-        widget.onFileSelected?.call(file.name);
       }
     } catch (e) {
-      print('Error picking a file: $e');
-    }
-  }
-
-  void goUpload() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pop(
-        context,
-        {
-          'title': title.text,
-          'drive': drive.text,
-          'date': dateinput.text,
-          'status': _statusController.text,
-          'fileName': _fileNameController.text,
-        },
-      );
+      // Handle exceptions
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading =
+            false; // Set loading state to false if picking is canceled
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
@@ -134,7 +145,7 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
             elevation: 0,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
             iconTheme: const IconThemeData(
-                color: Color.fromRGBO(148, 112, 18, 1), size: 30)),
+                color: Color.fromRGBO(0, 146, 143, 10), size: 30)),
         body: SafeArea(
             child: Container(
                 padding: const EdgeInsets.all(20),
@@ -153,168 +164,282 @@ class _FinalReportUploadState extends State<FinalReportUpload> {
                     child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 20),
-                        child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 5),
-                                  child: Form(
-                                      key: _formKey,
-                                      child: Column(
-                                        children: [
-                                          TextFormField(
-                                            onChanged: (value) {
-                                              setState(() {
-                                                title.text = value;
-                                              });
-                                            },
-                                            decoration: InputDecoration(
-                                              border: OutlineInputBorder(
+                        child: Consumer<Data>(
+                            builder: (context, reportsProvider, child) {
+                          return Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 5),
+                                    child: Form(
+                                        key: _formKey,
+                                        child: Column(
+                                          children: [
+                                            TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.title,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.title_rounded),
+                                                hintText: '',
+                                                labelText: 'Report Title',
+                                              ),
+                                              validator: (value) =>
+                                                  _validateField(
+                                                      value, 'report title'),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        const Text(
+                                                          'Final Report File',
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .black87,
+                                                              fontSize: 15,
+                                                              fontFamily:
+                                                                  'Futura'),
+                                                          textAlign:
+                                                              TextAlign.left,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 10),
+                                                        ElevatedButton(
+                                                            onPressed:
+                                                                _pickFile,
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  const Color
+                                                                      .fromRGBO(
+                                                                      0,
+                                                                      146,
+                                                                      143,
+                                                                      10),
+                                                            ),
+                                                            child: const Text(
+                                                              'Attach File',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontFamily:
+                                                                      'Futura'),
+                                                            )),
+                                                        if (_isUploading)
+                                                          const CircularProgressIndicator(),
+                                                      ]),
+                                                  const SizedBox(height: 7),
+                                                  Text(
+                                                    finalReportName
+                                                            .text.isNotEmpty
+                                                        ? 'Selected File: ${finalReportName.text}'
+                                                        : '',
+                                                    style: const TextStyle(
+                                                      color: Colors.black87,
+                                                      fontFamily: 'Futura',
+                                                    ),
+                                                  ),
+                                                ]),
+                                            const SizedBox(height: 20),
+                                            TextFormField(
+                                              controller:
+                                                  reportsProvider.dateinput,
+                                              readOnly: true,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                   borderSide: const BorderSide(
                                                       width: 0,
-                                                      style: BorderStyle.none)),
-                                              fillColor: Colors.grey[100],
-                                              filled: true,
-                                              prefixIcon: const Icon(
-                                                  Icons.title_rounded),
-                                              hintText: '',
-                                              labelText: 'Report Title',
-                                            ),
-                                            validator: (value) =>
-                                                _validateField(
-                                                    value, 'report title'),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Flexible(
-                                                    child: Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                      TextFormField(
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            drive.text = value;
-                                                          });
-                                                        },
-                                                        decoration:
-                                                            InputDecoration(
-                                                          border: OutlineInputBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                              borderSide:
-                                                                  const BorderSide(
-                                                                      width: 0,
-                                                                      style: BorderStyle
-                                                                          .none)),
-                                                          fillColor:
-                                                              Colors.grey[100],
-                                                          filled: true,
-                                                          prefixIcon:
-                                                              const Icon(Icons
-                                                                  .link_rounded),
-                                                          hintText: 'https://',
-                                                          labelText:
-                                                              'Google Drive Link',
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 5),
-                                                      Text(
-                                                        _fileNameController
-                                                                .text.isNotEmpty
-                                                            ? 'Selected File: ${_fileNameController.text}'
-                                                            : '',
-                                                        style: TextStyle(
-                                                          fontSize: 15,
-                                                          color:
-                                                              Colors.green[700],
-                                                        ),
-                                                        textAlign:
-                                                            TextAlign.left,
-                                                      ),
-                                                    ])),
-                                                const SizedBox(width: 10),
-                                                Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    _File(onTap: _pickFile),
-                                                    _Cam(
-                                                      onTap: () {},
-                                                    ),
-                                                  ],
+                                                      style: BorderStyle.none),
                                                 ),
-                                              ]),
-                                          const SizedBox(height: 20),
-                                          TextFormField(
-                                            controller: dateinput,
-                                            readOnly: true,
-                                            decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                borderSide: const BorderSide(
-                                                    width: 0,
-                                                    style: BorderStyle.none),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.calendar_today),
+                                                labelText: 'Date',
                                               ),
-                                              fillColor: Colors.grey[100],
-                                              filled: true,
-                                              prefixIcon: const Icon(
-                                                  Icons.calendar_today),
-                                              labelText: 'Date',
                                             ),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          TextFormField(
-                                            controller: _statusController,
-                                            decoration: const InputDecoration(
-                                                labelText: 'Status'),
-                                            readOnly: true,
-                                          ),
-                                        ],
-                                      ))),
-                              const SizedBox(height: 20),
-                              Container(
-                                  alignment: Alignment.bottomRight,
-                                  child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Expanded(
-                                            child: ElevatedButton(
-                                          onPressed: () {
-                                            finaldb.set({
-                                              'Report Title': title.text,
-                                              'File':
-                                                  _fileNameController.text,
-                                              'Drive Link': drive.text,
-                                              'Date': dateinput.text,
-                                              'Status': _statusController.text,
-                                            });
-                                            goUpload();
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                              minimumSize:
-                                                  const Size.fromHeight(50)),
-                                          child: const Text(
-                                            'Submit',
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                        ))
-                                      ])),
-                            ]))))));
+                                            const SizedBox(height: 20),
+                                            TextFormField(
+                                              controller:
+                                                  reportsProvider.statusFinal,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Status'),
+                                              readOnly: true,
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                MouseRegion(
+                                                  cursor:
+                                                      SystemMouseCursors.click,
+                                                  child: Tooltip(
+                                                    message:
+                                                        'Submission should be in PDF format',
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .end,
+                                                      children: [
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            showPDFformat(
+                                                                context);
+                                                          },
+                                                          child: const Icon(
+                                                            Icons.info,
+                                                            size: 30,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    0,
+                                                                    146,
+                                                                    143,
+                                                                    10),
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        ))),
+                                const SizedBox(height: 20),
+                                Container(
+                                    alignment: Alignment.bottomRight,
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Expanded(
+                                              child: ElevatedButton(
+                                            onPressed: () async {
+                                              User? user = FirebaseAuth
+                                                  .instance.currentUser;
+
+                                              reportsProvider.finalReportName
+                                                  .text = finalReportName.text;
+                                              if (user != null) {
+                                                String userId = user.uid;
+
+                                                DatabaseReference userRef =
+                                                    FirebaseDatabase.instance
+                                                        .ref('Student')
+                                                        .child('Final Report')
+                                                        .child(userId);
+
+                                                userRef.set({
+                                                  'Report Title':
+                                                      studentData.title.text,
+                                                  'File Name': reportsProvider
+                                                      .finalReportName.text,
+                                                  'File': selectedFileFinal,
+                                                  'Date': reportsProvider
+                                                      .dateinput.text,
+                                                  'Status': reportsProvider
+                                                      .statusFinal.text,
+                                                });
+
+                                                // Navigate back to the monthly report page
+                                                Navigator.pushNamed(
+                                                    context, '/final_report');
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    const Color.fromRGBO(
+                                                        0, 146, 143, 10),
+                                                minimumSize:
+                                                    const Size.fromHeight(50)),
+                                            child: const Text(
+                                              'Submit',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ))
+                                        ])),
+                              ]);
+                        }))))));
+  }
+
+  void showPDFformat(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Attention',
+            style: TextStyle(
+              color: Colors.red[800],
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura',
+            ),
+          ),
+          content: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: 'Submission should be in ',
+                ),
+                TextSpan(
+                  text: 'PDF format ',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Futura',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
+          ],
+        );
+      },
+    );
   }
 }
