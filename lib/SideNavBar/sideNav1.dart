@@ -1,11 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:student/Service/auth_service.dart';
 import 'package:student/layerOne/iapForm.dart';
 import 'package:student/layerOne/announcement.dart';
 
 void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false));
 
 class sideNav1 extends StatelessWidget {
+  final AuthService authService = AuthService();
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -15,33 +18,33 @@ class sideNav1 extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             DrawerHeader(
-                  decoration: const BoxDecoration(
-                    color: Color.fromRGBO(148, 112, 18, 10),
+              decoration: const BoxDecoration(
+                color: Color.fromRGBO(0, 146, 143, 10),
+              ),
+              child: Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.start, // Center the items horizontally
+                children: [
+                  Image.asset(
+                    'assets/iium.png', // Your image asset
+                    height: 50, // Adjust the height as needed
+                    width: 50, // Adjust the width as needed
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment
-                        .start, // Center the items horizontally
-                    children: [
-                      Image.asset(
-                        'assets/iium.png', // Your image asset
-                        height: 50, // Adjust the height as needed
-                        width: 50, // Adjust the width as needed
-                      ),
-                      const SizedBox(
-                          width: 10), // Add spacing between the image and text
-                      const Text(
-                        'i-KICT',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'Futura',
-                        ),
-                      ),
-                    ],
+                  const SizedBox(
+                      width: 10), // Add spacing between the image and text
+                  const Text(
+                    'i-KICT',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'Futura',
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
             const SizedBox(height: 10),
             buildMenuItem(
                 text: 'Announcements and Quick Reminder',
@@ -59,7 +62,21 @@ class sideNav1 extends StatelessWidget {
             buildMenuItem(
               text: 'Logout',
               icon: Icons.exit_to_app_rounded,
-              onClicked: () => SystemNavigator.pop(),
+              onClicked: () async {
+                try {
+                  await authService.handleSignOut();
+                  Navigator.of(context).pop();
+                  Navigator.pushNamed(context, '/signIn');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('YEAYY! Logout'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (e) {
+                  print("Error during logout: $e");
+                }
+              },
             ),
           ],
         ),
@@ -74,7 +91,7 @@ class sideNav1 extends StatelessWidget {
     return ListTile(
         leading: Icon(
           icon,
-          color: const Color.fromRGBO(148, 112, 18, 10),
+          color: const Color.fromRGBO(0, 146, 143, 10),
         ),
         title: Text(
           text,
@@ -94,7 +111,7 @@ class sideNav1 extends StatelessWidget {
         break;
       case 1:
         Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => const IapForm(),
+          builder: (context) => IapForm(),
         ));
         break;
     }
