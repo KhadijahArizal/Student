@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:student/layerOne/announcement.dart';
 
@@ -12,6 +13,7 @@ final _pass = GlobalKey<FormState>();
 
 class _PassphraseState extends State<Passphrase> {
   bool passwordVisible = false;
+  bool _isLoading = false;
   final TextEditingController _passphraseController = TextEditingController();
 
   @override
@@ -22,9 +24,8 @@ class _PassphraseState extends State<Passphrase> {
 
   @override
   Widget build(BuildContext context) {
-    // Set the correct passphrase
+    User? user = FirebaseAuth.instance.currentUser;
     const correctPassphrase = 'KICTIAP2024';
-
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       body: Center(
@@ -46,19 +47,12 @@ class _PassphraseState extends State<Passphrase> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Stack(
-                    alignment: Alignment.topLeft,
-                    children: <Widget>[
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 25),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      )
-                    ],
-                  )
+                  const Icon(Icons.person_rounded,
+                      color: Color.fromRGBO(0, 146, 143, 10), size: 25),
+                  const SizedBox(width: 5),
+                  Text('${user?.displayName}')
                 ],
               ),
               Column(
@@ -120,7 +114,6 @@ class _PassphraseState extends State<Passphrase> {
                         child: TextFormField(
                           obscureText: passwordVisible,
                           controller: _passphraseController,
-                          onChanged: (value) {},
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -137,8 +130,8 @@ class _PassphraseState extends State<Passphrase> {
                             suffixIcon: IconButton(
                               icon: Icon(
                                 passwordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -152,6 +145,9 @@ class _PassphraseState extends State<Passphrase> {
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
+                          setState(() {
+                            _isLoading = true;
+                          });
                           String enteredPassphrase =
                               _passphraseController.text.trim().toUpperCase();
                           if (enteredPassphrase == correctPassphrase) {
@@ -176,39 +172,33 @@ class _PassphraseState extends State<Passphrase> {
                                     textAlign: TextAlign.center,
                                   ),
                                   actions: [
-                                    Center(
-                                      child: ElevatedButton(
+                                    ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pop(context);
+                                          Navigator.of(context).pop();
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color.fromRGBO(
-                                              148, 112, 18, 1),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100),
-                                          ),
-                                          minimumSize:
-                                              const Size(double.infinity, 50),
+                                              0, 146, 143, 10),
                                         ),
                                         child: const Text(
-                                          'OK',
+                                          'Ok',
                                           style: TextStyle(
-                                            color: Colors.white,
-                                            fontFamily: 'Futura',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                              color: Colors.white,
+                                              fontFamily: 'Futura'),
+                                        )),
                                   ],
                                 );
                               },
-                            );
+                            ).then((value) {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            });
                           }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              const Color.fromRGBO(148, 112, 18, 1),
+                              const Color.fromRGBO(0, 146, 143, 10),
                           minimumSize: const Size(
                               double.infinity, 50), // Set button width
                         ),
@@ -217,7 +207,7 @@ class _PassphraseState extends State<Passphrase> {
                           style: TextStyle(
                               color: Colors.white, fontFamily: 'Futura'),
                         ),
-                      ),
+                      ),if (_isLoading) const CircularProgressIndicator()
                     ],
                   ),
                 ],
