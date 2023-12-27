@@ -60,6 +60,9 @@ dependencies:
   google_sign_in: ^6.2.1
   firebase_auth: ^4.15.3
   get: ^4.6.6
+  pdf: ^3.10.7
+  flutter_pdfview: ^1.3.2
+  advance_pdf_viewer: ^2.0.0
   
 
 dev_dependencies:
@@ -89,6 +92,8 @@ flutter:
   - assets/profile.jpg
   - assets/iium.png
   - assets/google.png
+  - assets/Help/iap_cover_letter.pdf
+  - assets/Help/iap_placement_verification.pdf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
