@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:student/BottomNavBar/bottomMenu.dart';
 import 'package:student/LayerTwo/Detect%20Status/statusManagament.dart';
 import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
-import 'package:student/LayerTwo/Tab/edit/studentForm.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'package:student/LayerTwo/details.dart';
 import 'package:student/Service/auth_service.dart';
 import 'package:student/SideNavBar/sideNav2.dart';
@@ -15,7 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 class Summary extends StatefulWidget {
   const Summary({
     Key? key,
-    this.dmatric,
     this.start,
     this.end,
     this.approvedCount,
@@ -24,7 +23,6 @@ class Summary extends StatefulWidget {
   }) : super(key: key);
 
   final String? start, end;
-  final String? dmatric;
   final int? approvedCount, pendingCount, rejectedCount;
 
   @override
@@ -111,36 +109,6 @@ class _SummaryState extends State<Summary> {
         ),
       );
 
-  Widget _examiner({required String examiner}) => Container(
-        alignment: Alignment.topLeft,
-        child: Visibility(
-          visible: _isVisible,
-          child: Column(
-            children: [
-              Text(
-                examiner,
-                style: const TextStyle(color: Colors.black87, fontSize: 16),
-              )
-            ],
-          ),
-        ),
-      );
-
-  Widget _company({required String company}) => Container(
-        alignment: Alignment.topRight,
-        child: Visibility(
-          visible: _isVisible,
-          child: Column(
-            children: [
-              Text(
-                company,
-                style: const TextStyle(color: Colors.black, fontSize: 16),
-              )
-            ],
-          ),
-        ),
-      );
-
   Widget _graphic({required String graphic}) => Container(
         alignment: Alignment.topCenter,
         child: Column(
@@ -165,6 +133,21 @@ class _SummaryState extends State<Summary> {
           children: [
             Text(
               'Registered for $note',
+              style: TextStyle(
+                  color: Colors.green[700],
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
+            )
+          ],
+        ),
+      );
+
+  Widget _cname({required String cname}) => Container(
+        alignment: Alignment.topLeft,
+        child: Column(
+          children: [
+            Text(
+              cname,
               style: TextStyle(
                   color: Colors.green[700],
                   fontSize: 16,
@@ -307,8 +290,7 @@ class _SummaryState extends State<Summary> {
     }
   }
 
-  late TextEditingController smatric =
-      TextEditingController(text: widget.dmatric ?? '-');
+  //Data companyDate = Data();
 
   @override
   void dispose() {
@@ -319,7 +301,6 @@ class _SummaryState extends State<Summary> {
   @override
   void initState() {
     super.initState();
-    smatric = TextEditingController(text: widget.dmatric ?? '-');
     _statusManagement = StatusManagement();
     statusManager.statusStream.listen((String status) {
       setState(() {
@@ -331,16 +312,12 @@ class _SummaryState extends State<Summary> {
 
   @override
   Widget build(BuildContext context) {
-    final Future<FirebaseApp> fApp = Firebase.initializeApp();
+    //final Future<FirebaseApp> fApp = Firebase.initializeApp();
+
+    int submissionCount = 0;
     User? user = FirebaseAuth.instance.currentUser;
     AuthService authService = AuthService();
-
-    if (widget.start != null && widget.end != null) {
-      print('Start Date: ${widget.start}');
-      print('End Date: ${widget.end}');
-      print('${widget.dmatric}');
-    }
-
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
@@ -356,14 +333,14 @@ class _SummaryState extends State<Summary> {
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         iconTheme: const IconThemeData(
-          color: const Color.fromRGBO(0, 146, 143, 10),
+          color: Color.fromRGBO(0, 146, 143, 10),
           size: 30,
         ),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.sort,
-                  color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+                  color: Color.fromRGBO(0, 146, 143, 10), size: 30),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -391,7 +368,7 @@ class _SummaryState extends State<Summary> {
           child: SingleChildScrollView(
             child: Stack(
               children: [
-                FutureBuilder(
+                /*FutureBuilder(
                     future: fApp,
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
@@ -401,11 +378,11 @@ class _SummaryState extends State<Summary> {
                       } else {
                         return const CircularProgressIndicator();
                       }
-                    }),
-                Column(
-                  children: [
-                    Container(
-                      child: Row(
+                    }),*/
+                Consumer<Data>(builder: (context, companyDate, child) {
+                  return Column(
+                    children: [
+                      Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
@@ -423,11 +400,7 @@ class _SummaryState extends State<Summary> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceAround,
                                       children: [
-                                        _name(name: dropDownValueBr),
-                                        const SizedBox(width: 5),
-                                        _name(
-                                            name:
-                                                '${user?.displayName}'), //${widget.userData['name']}}
+                                        _name(name: '${user?.displayName}'),
                                       ])
                                 ]),
                             Column(
@@ -447,310 +420,343 @@ class _SummaryState extends State<Summary> {
                               ],
                             ),
                           ]),
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Column(children: <Widget>[
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(90),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: const Color.fromRGBO(0, 146, 143, 10),
-                              )
-                            ],
-                            border: Border.all(
-                                color: const Color.fromRGBO(0, 146, 143, 10),
-                                width: 7)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _studentContact(
-                                email: '${user?.email}',
-                                matricNo: '${widget.dmatric}')
-                          ],
-                        ),
+                      const SizedBox(
+                        height: 5,
                       ),
-
-                      //INFO xxxx registration notes
-                      Visibility(
-                          visible: _isVisible,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 20),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'INFO 4901 Registration Notes',
-                                          style: TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 15,
-                                              fontFamily: 'Futura'),
-                                        ),
-                                        _note(note: dropdownValueSem),
-                                      ]),
-                                ]),
-                          )),
-
-                      //Monthly Report
-                      Visibility(
-                          visible: _isVisible,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 20),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: Colors.white,
+                      Column(children: <Widget>[
+                        Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(90),
                               boxShadow: const [
-                                BoxShadow(color: Colors.grey, blurRadius: 1.0)
+                                BoxShadow(
+                                  color: Color.fromRGBO(0, 146, 143, 10),
+                                )
                               ],
-                            ),
-                            child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  //headline
-                                  const Text(
-                                    'Monthly Report Submission',
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontFamily: 'Futura',
-                                        fontWeight: FontWeight.w900),
-                                  ),
-                                  const Divider(
-                                    color: Colors.black,
-                                    thickness: 0.1,
-                                  ),
-                                  //GRAPHIC HERE
-                                  Container(
-                                    padding: const EdgeInsets.all(20),
-                                    child: Column(
+                              border: Border.all(
+                                  color: const Color.fromRGBO(0, 146, 143, 10),
+                                  width: 7)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _studentContact(
+                                  email: '${user?.email}',
+                                  matricNo: studentData.matric.text)
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        //INFO xxxx registration notes
+                        Visibility(
+                            visible: _isVisible,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          _graphic(
-                                              graphic: 'assets/profile.jpg'),
+                                          const Text(
+                                            'INFO 4901 Registration Notes',
+                                            style: TextStyle(
+                                                color: Colors.black54,
+                                                fontSize: 15,
+                                                fontFamily: 'Futura'),
+                                          ),
+                                          _note(note: dropdownValueSem),
                                         ]),
-                                  ),
-                                  const Divider(
-                                    color: Colors.black,
-                                    thickness: 0.1,
-                                  ),
-                                  Container(
-                                      padding: const EdgeInsets.all(20),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                  ]),
+                            )),
+
+                        Visibility(
+                            visible: _isVisible,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text('Approved',
-                                                  style: TextStyle(
-                                                      color: Colors.green[700],
-                                                      fontSize: 15,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900)),
-                                              Text(
-                                                  widget.approvedCount
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      color: Colors.green[700],
-                                                      fontSize: 30,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900))
-                                            ],
+                                          const Text(
+                                            'Company Name',
+                                            style: TextStyle(
+                                                color: Colors.black54,
+                                                fontSize: 15,
+                                                fontFamily: 'Futura'),
                                           ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text('Pending',
-                                                  style: TextStyle(
-                                                      color: Colors.yellow[700],
-                                                      fontSize: 15,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900)),
-                                              Text(
-                                                  widget.pendingCount
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      color: Colors.yellow[700],
-                                                      fontSize: 30,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900))
-                                            ],
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text('Reject',
-                                                  style: TextStyle(
-                                                      color: Colors.red[700],
-                                                      fontSize: 15,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900)),
-                                              Text(
-                                                  widget.rejectedCount
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      color: Colors.red[700],
-                                                      fontSize: 30,
-                                                      fontFamily: 'Futura',
-                                                      fontWeight:
-                                                          FontWeight.w900))
-                                            ],
-                                          ),
-                                        ],
-                                      )),
-                                  const Divider(
-                                    color: Colors.black,
-                                    thickness: 0.1,
-                                  ),
-                                  Container(
-                                      margin: const EdgeInsets.only(top: 10),
-                                      alignment: Alignment.bottomRight,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  MonthlyReport(
-                                                reportType: ReportType.create,
-                                                onCalculateStatus:
-                                                    (int approved, int pending,
-                                                        int rejected) {},
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.teal.shade900, //
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                100), // Set the border radius to 100
-                                          ),
-                                        ),
-                                        icon: const Icon(Icons.add_circle,
-                                            color: Colors
-                                                .white), // Icon data for elevated button
-                                        label: const Text(
-                                          "New Report",
-                                          style: TextStyle(color: Colors.white),
-                                        ), // Label text
-                                      )),
-                                ]),
-                          )),
-
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white,
-                          boxShadow: const [
-                            BoxShadow(color: Colors.grey, blurRadius: 1.0)
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            //headline
-                            const Text(
-                              'Important Annoucements',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontFamily: 'Futura',
-                                  fontWeight: FontWeight.w900),
-                            ),
-                            const Divider(
-                              color: Colors.black,
-                              thickness: 0.1,
-                            ),
-                            ExpansionTile(
-                              title: const Text('INFO 4901 Registration Notes',
-                                  style: TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 14,
-                                      fontFamily: 'Futura')),
-                              subtitle: const Text(
-                                'Dr.Ameera Binti Huseein',
-                                style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 13,
-                                    fontFamily: 'Futura'),
-                              ),
-                              trailing: Icon(
-                                _customTileExpanded
-                                    ? Icons.arrow_drop_down_circle
-                                    : Icons.arrow_drop_down,
-                              ),
-                              children: const <Widget>[
-                                ListTile(
-                                    title: Text(
-                                        'Dear Student, please do Pre-Reg INFO 4901 course by TODAY! Thank you',
-                                        style: TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 12,
-                                            fontFamily: 'Futura')))
-                              ],
-                              onExpansionChanged: (bool expanded) {
-                                setState(() {
-                                  _customTileExpanded = expanded;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      Visibility(
-                          visible: _isVisible,
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(90),
+                                          _cname(
+                                              cname: studentData.company.text),
+                                        ]),
+                                  ]),
+                            )),
+                        const SizedBox(height: 10),
+                        //Monthly Report
+                        Visibility(
+                            visible: _isVisible,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.white,
                                 boxShadow: const [
-                                  BoxShadow(
-                                      color: Color.fromRGBO(148, 112, 18, 1))
+                                  BoxShadow(color: Colors.grey, blurRadius: 1.0)
                                 ],
-                                border: Border.all(
-                                    color:
-                                        const Color.fromRGBO(148, 112, 18, 1),
-                                    width: 7)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _date(
-                                    startDate: widget.start ?? '-',
-                                    endDate: widget.end ?? '-'),
-                              ],
-                            ),
-                          )),
-                      const SizedBox(height: 20),
-                    ]),
-                  ],
-                ),
+                              ),
+                              child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    //headline
+                                    const Text(
+                                      'Monthly Report Submission',
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 15,
+                                          fontFamily: 'Futura',
+                                          fontWeight: FontWeight.w900),
+                                    ),
+                                    const Divider(
+                                      color: Colors.black,
+                                      thickness: 0.1,
+                                    ),
+                                    //GRAPHIC HERE
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _graphic(
+                                                graphic: 'assets/profile.jpg'),
+                                          ]),
+                                    ),
+                                    const Divider(
+                                      color: Colors.black,
+                                      thickness: 0.1,
+                                    ),
+                                    Container(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text('Approved',
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.green[700],
+                                                        fontSize: 15,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900)),
+                                                Text(
+                                                    widget.approvedCount
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.green[700],
+                                                        fontSize: 30,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900))
+                                              ],
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text('Pending',
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.yellow[700],
+                                                        fontSize: 15,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900)),
+                                                Text(
+                                                    widget.pendingCount
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.yellow[700],
+                                                        fontSize: 30,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900))
+                                              ],
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text('Reject',
+                                                    style: TextStyle(
+                                                        color: Colors.red[700],
+                                                        fontSize: 15,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900)),
+                                                Text(
+                                                    widget.rejectedCount
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        color: Colors.red[700],
+                                                        fontSize: 30,
+                                                        fontFamily: 'Futura',
+                                                        fontWeight:
+                                                            FontWeight.w900))
+                                              ],
+                                            ),
+                                          ],
+                                        )),
+                                    const Divider(
+                                      color: Colors.black,
+                                      thickness: 0.1,
+                                    ),
+                                    Container(
+                                        margin: const EdgeInsets.only(top: 10),
+                                        alignment: Alignment.bottomRight,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    MonthlyReport(
+                                                  reportType: ReportType.create,
+                                                  onCalculateStatus:
+                                                      (int approved,
+                                                          int pending,
+                                                          int rejected) {},
+                                                  weekNumber: submissionCount,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    0, 146, 143, 10),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(100),
+                                            ),
+                                          ),
+                                          icon: const Icon(Icons.add_circle,
+                                              color: Colors.white),
+                                          label: const Text(
+                                            "New Report",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        )),
+                                  ]),
+                            )),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 20),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.white,
+                            boxShadow: const [
+                              BoxShadow(color: Colors.grey, blurRadius: 1.0)
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              //headline
+                              const Text(
+                                'Important Annoucements',
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontFamily: 'Futura',
+                                    fontWeight: FontWeight.w900),
+                              ),
+                              const Divider(
+                                color: Colors.black,
+                                thickness: 0.1,
+                              ),
+                              ExpansionTile(
+                                title: const Text(
+                                    'INFO 4901 Registration Notes',
+                                    style: TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 14,
+                                        fontFamily: 'Futura')),
+                                subtitle: const Text(
+                                  'Dr.Ameera Binti Huseein',
+                                  style: TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 13,
+                                      fontFamily: 'Futura'),
+                                ),
+                                trailing: Icon(
+                                  _customTileExpanded
+                                      ? Icons.arrow_drop_down_circle
+                                      : Icons.arrow_drop_down,
+                                ),
+                                children: const <Widget>[
+                                  ListTile(
+                                      title: Text(
+                                          'Dear Student, please do Pre-Reg INFO 4901 course by TODAY! Thank you',
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 12,
+                                              fontFamily: 'Futura')))
+                                ],
+                                onExpansionChanged: (bool expanded) {
+                                  setState(() {
+                                    _customTileExpanded = expanded;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        Visibility(
+                            visible: _isVisible,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(90),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color: Color.fromRGBO(0, 146, 143, 10))
+                                  ],
+                                  border: Border.all(
+                                      color:
+                                          const Color.fromRGBO(0, 146, 143, 10),
+                                      width: 7)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _date(
+                                      startDate: companyDate.start.text,
+                                      endDate: companyDate.end.text),
+                                ],
+                              ),
+                            )),
+                        const SizedBox(height: 20),
+                      ]),
+                    ],
+                  );
+                })
               ],
             ),
           ),
@@ -764,13 +770,13 @@ class _SummaryState extends State<Summary> {
           'Monthly Report': '/monthly_report',
           'Final Report': '/final_report',
         },
-        studentStatus: _statusManagement.studentStatus,
+        //studentStatus: _statusManagement.studentStatus,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _showOptions(context);
         },
-        backgroundColor: const Color.fromRGBO(148, 112, 18, 0.8),
+        backgroundColor: const Color.fromRGBO(0, 146, 143, 0.8),
         child: const Icon(Icons.email, color: Colors.white),
       ),
     );
