@@ -1,15 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:student/LayerTwo/details.dart';
-import 'package:student/LayerTwo/Monthly/monthlyReport.dart';
-import 'package:student/LayerTwo/placements.dart';
-import 'package:student/LayerTwo/summary.dart';
-import 'package:student/LayerTwo/FA/finalReport.dart';
-import 'package:student/SignIn/SignIn.dart';
-import 'package:student/SignIn/auth.dart';
-import 'package:student/layerOne/adminReview.dart';
-import 'package:student/layerOne/iapForm.dart';
-import 'package:student/layerOne/logo.dart';
+import 'package:provider/provider.dart';
+import 'package:supervisor/Screen/Announcements/announcements.dart';
+import 'package:supervisor/Screen/FinalReport/studentFinalReport.dart';
+import 'package:supervisor/Screen/Monthly/studentMonthlyReport.dart';
+import 'package:supervisor/Screen/StudentList/studentDetails.dart';
+import 'package:supervisor/Screen/Summary.dart';
+import 'package:supervisor/Screen/StudentList/studentList.dart';
+import 'package:supervisor/Screen/data.dart';
+import 'package:supervisor/SignIn/SignIn.dart';
+import 'package:supervisor/SignIn/auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,55 +21,49 @@ void main() async {
           projectId: "ikict-f49f6",
           storageBucket: "ikict-f49f6.appspot.com",
           messagingSenderId: "753383357173",
-          appId: "1:753383357173:web:cb41d4980a59f94e9fe3bc",
-          measurementId: "G-VZHRYCDNRT"));
+          appId: "1:753383357173:web:8ed039663a24205f9fe3bc",
+          measurementId: "G-0LXK2QRZMH"));
 
-  runApp(MyApp());
+  Data dataInstance = Data();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: dataInstance)
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'iKICT | Student',
+      title: 'iKICT | Supervisor',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: Colors.teal.shade900,
+        primaryColor: const Color.fromRGBO(0, 146, 143, 10),
         fontFamily: 'Futura',
       ),
       initialRoute: '/auth',
       routes: {
         '/auth': (context) => const AuthPage(),
-        //'/splash': (context) => SplashScreen(),
         '/signIn': (context) => const SignIn(),
-        '/adminreview': (context) => const AdminReviewPage(
-              name: '',
-              email: '',
-              matric: '',
+        '/summary': (context) => const Summary(title: 'Summary'),
+        '/student_list': (context) =>
+            const StudentList(title: 'List of Students'),
+        '/announc': (context) => const Announc(title: 'Announcements'),
+        '/student_details': (context) => StudentDetails(
+              title: 'Student Details',
+              studentName: '',
+              Matric: '',
+              status: '',
+              onStatusChanged: (String) {},
             ),
-        '/summary': (context) => const Summary(
-              start: '',
-              end: '',
-              approvedCount: 0,
-              pendingCount: 0,
-              rejectedCount: 0,
-              dmatric: '',
-            ),
-        '/monthly_report': (context) => MonthlyReport(
-              reportType: ReportType.create,
-              onCalculateStatus: (int approved, int pending, int rejected) {},
-            ),
-        '/final_report': (context) => const FinalReport(
-              title: '',
-              drive: '',
-              date: '',
-            ),
-        '/details': (context) => const Details(),
-        '/placements': (context) => const Placements(
-              title: 'Placements',
-              companyName: '',
-            ),
-        '/iap': (context) => IapForm(),
+        '/monthly': (context) =>
+            const SMonthlyReport(title: 'Student Monthly Report'),
+        '/final': (context) => const SFinalReport(title: 'Student Final Report')
       },
     );
   }
