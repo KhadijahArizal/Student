@@ -1,9 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:student/LayerTwo/Tab/data.dart';
 import 'package:student/SideNavBar/sideNav1.dart';
 import 'package:student/layerOne/adminReview.dart';
 
@@ -45,26 +48,17 @@ class _IapFormState extends State<IapForm> {
   bool isChecked = false;
   TextEditingController name = TextEditingController();
   TextEditingController matric = TextEditingController();
-  TextEditingController phone = TextEditingController();
   TextEditingController email = TextEditingController();
-  TextEditingController univ = TextEditingController();
-  TextEditingController rdepart = TextEditingController();
-  TextEditingController kull = TextEditingController();
-  TextEditingController edepart = TextEditingController();
-  TextEditingController ch = TextEditingController();
-  TextEditingController totalch = TextEditingController();
-  TextEditingController note = TextEditingController();
   late TextEditingController _grd;
   late TextEditingController _partial;
   late TextEditingController _confirm;
-  
-  //RealtimeDatabase
-  final iapformdb = FirebaseDatabase.instance.ref('IAP Form');
-  
-  //FirebaseFirestore
-  final FirebaseFirestore _firebasefr = FirebaseFirestore.instance;
-  
-
+  User? user = FirebaseAuth.instance.currentUser;
+  String selectedFileGrd = '';
+  String selectedFilePartial = '';
+  String selectedFileCon = '';
+  bool _isUploading1 = false;
+  bool _isUploading2 = false;
+  bool _isUploading3 = false;
   void GoReview() {
     if (_formKey.currentState!.validate()) {
       Navigator.pushReplacement(
@@ -92,9 +86,9 @@ class _IapFormState extends State<IapForm> {
     _partial = TextEditingController(text: "-");
     _confirm = TextEditingController(text: "-");
 
-    name.text = widget.initialName ?? '';
-    matric.text = widget.initialMatric ?? '';
-    email.text = widget.initialEmail ?? '';
+    name.text = widget.initialName ?? '-';
+    matric.text = widget.initialMatric ?? '-';
+    email.text = '${user?.email}';
   }
 
   @override
@@ -108,9 +102,10 @@ class _IapFormState extends State<IapForm> {
       if (states.any(interactiveStates.contains)) {
         return const Color.fromARGB(255, 214, 180, 96);
       }
-      return const Color.fromRGBO(148, 112, 18, 1);
+      return const Color.fromRGBO(0, 146, 143, 10);
     }
 
+    var studentData = Provider.of<Data>(context);
     return Scaffold(
         backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
         appBar: AppBar(
@@ -126,12 +121,12 @@ class _IapFormState extends State<IapForm> {
           elevation: 0,
           systemOverlayStyle: SystemUiOverlayStyle.dark,
           iconTheme: const IconThemeData(
-              color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+              color: Color.fromRGBO(0, 146, 143, 10), size: 30),
           leading: Builder(
             builder: (BuildContext context) {
               return IconButton(
                 icon: const Icon(Icons.sort,
-                    color: Color.fromRGBO(148, 112, 18, 1), size: 30),
+                    color: Color.fromRGBO(0, 146, 143, 10), size: 30),
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
                 },
@@ -161,720 +156,964 @@ class _IapFormState extends State<IapForm> {
                   Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 20),
-                      child: SingleChildScrollView(
-                          child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            //personal details
-                            const Text(
-                              'Personal Details',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 17,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Divider(
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 5),
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  controller: name,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.person_rounded),
-                                    labelText: 'Name',
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your name';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: matric,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon: const Icon(Icons.badge_rounded),
-                                    labelText: 'Matric No',
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your matric no';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: phone,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon: const Icon(Icons.call_rounded),
-                                    labelText: 'Phone',
-                                    hintText: "011-xxxxxxx",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your phone number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.emailAddress,
-                                  controller: email,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon: const Icon(Icons.email_rounded),
-                                    labelText: 'Email',
-                                    hintText: "admin@live.iium.edu.my",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your email';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 20),
-
-                            //academic details
-                            const Text(
-                              'Academic Details',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 17,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Text(
-                              '(State your study plan credit hours)',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Divider(
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 5),
-                            Container(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.grey[100],
-                              ),
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                underline: Container(), // Remove underline
-                                value: dropdownValueMajor,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    dropdownValueMajor = value!;
-                                  });
-                                },
-                                items: major.map<DropdownMenuItem<String>>(
-                                  (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Container(
-                                        margin: const EdgeInsets.only(left: 5),
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(value),
-                                      ),
-                                    );
-                                  },
-                                ).toList(),
-                                icon: const Icon(Icons.keyboard_arrow_down),
-                                iconSize: 24,
-                                elevation: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Container(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.grey[100],
-                              ),
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                underline: Container(), // Remove underline
-                                value: dropdownValueAdmission,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    dropdownValueAdmission = value!;
-                                  });
-                                },
-                                items: addmission.map<DropdownMenuItem<String>>(
-                                  (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Container(
-                                        margin: const EdgeInsets.only(left: 5),
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(value),
-                                      ),
-                                    );
-                                  },
-                                ).toList(),
-                                icon: const Icon(Icons.keyboard_arrow_down),
-                                iconSize: 24,
-                                elevation: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: univ,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText: 'University Required Course',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: rdepart,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText: 'Department Required Course',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: kull,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText: 'Kulliyyah Required Course',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: edepart,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText: 'Department Elective Course',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: ch,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText:
-                                        'Credit Hours for Current Semester',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 5),
-
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: totalch,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.school_rounded),
-                                    labelText: 'Total Credit Hours Required',
-                                    hintText: "0/0",
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the number';
-                                    }
-                                    return null;
-                                  },
-                                )),
-                            const SizedBox(height: 20),
-
-                            //commercement IAP
-                            const Text(
-                              'Commercement of Industrial Attachment Programme',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 17,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Text(
-                              '(select semester for IAP commercement/start)',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Divider(
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 5),
-                            Container(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.grey[100],
-                              ),
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                underline: Container(), // Remove underline
-                                value: dropdownValueSem,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    dropdownValueSem = value!;
-                                  });
-                                },
-                                items: sem.map<DropdownMenuItem<String>>(
-                                  (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Container(
-                                        margin: const EdgeInsets.only(left: 5),
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(value),
-                                      ),
-                                    );
-                                  },
-                                ).toList(),
-                                icon: const Icon(Icons.keyboard_arrow_down),
-                                iconSize: 24,
-                                elevation: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
-                            //Attachment
-                            const Text(
-                              'Required Attachments',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 17,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    '(for validation purposes)',
-                                    style: TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 13,
-                                        fontStyle: FontStyle.italic,
-                                        fontFamily: 'Futura'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  SizedBox(
-                                      child: ElevatedButton(
-                                          onPressed: () {
-                                            instruction();
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.black87,
-                                              side: const BorderSide(
-                                                  color: Colors.white70),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          100))),
-                                          child: const Text(
-                                            'Instruction',
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10,
-                                                fontFamily: 'Futura'),
-                                          )))
-                                ]),
-                            const Divider(
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 5),
-                            Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
+                      child: SingleChildScrollView(child:
+                          Consumer<Data>(builder: (context, Data, child) {
+                        return Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 5),
+                                  child: Form(
+                                    key: _formKey,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
+                                        //personal details
                                         const Text(
-                                          'Graduation Audit:',
+                                          'Personal Details',
                                           style: TextStyle(
                                               color: Colors.black87,
                                               fontSize: 17,
                                               fontFamily: 'Futura'),
-                                          textAlign: TextAlign.right,
+                                          textAlign: TextAlign.center,
                                         ),
-                                        const SizedBox(width: 10),
-                                        ElevatedButton(
-                                            onPressed: _pickFileGrd,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                            ),
-                                            child: const Text(
-                                              'Attach File',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontFamily: 'Futura'),
+                                        const Divider(
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.iapname,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.person_rounded),
+                                                labelText: 'Name',
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter your name';
+                                                }
+                                                return null;
+                                              },
                                             )),
-                                        const SizedBox(width: 10),
-                                        IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(
-                                              Icons.camera_alt_rounded,
-                                              color: Colors.black87),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.matric,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.badge_rounded),
+                                                labelText: 'Matric No',
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter your matric no';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.contact,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.call_rounded),
+                                                labelText: 'Phone',
+                                                hintText: "011-xxxxxxx",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter your phone number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                          padding: const EdgeInsets.all(5),
+                                          child: TextFormField(
+                                              controller: email,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.link_rounded),
+                                                labelText: 'E-mail',
+                                              ),
+                                              readOnly: true),
                                         ),
-                                      ]),
-                                  Text(
-                                    _grd.text.isNotEmpty
-                                        ? 'Selected File: ${_grd.text}'
-                                        : '',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontFamily: 'Futura',
-                                    ),
-                                  ),
-                                  Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
+                                        const SizedBox(height: 20),
+
+                                        //academic details
                                         const Text(
-                                          'Partial Transcript:',
+                                          'Academic Details',
                                           style: TextStyle(
                                               color: Colors.black87,
                                               fontSize: 17,
                                               fontFamily: 'Futura'),
-                                          textAlign: TextAlign.right,
+                                          textAlign: TextAlign.center,
                                         ),
-                                        const SizedBox(width: 10),
-                                        ElevatedButton(
-                                            onPressed: _pickFilePartial,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                            ),
-                                            child: const Text(
-                                              'Attach File',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontFamily: 'Futura'),
-                                            )),
-                                        const SizedBox(width: 10),
-                                        IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(
-                                              Icons.camera_alt_rounded,
-                                              color: Colors.black87),
-                                        ),
-                                      ]),
-                                  Text(
-                                    _partial.text.isNotEmpty
-                                        ? 'Selected File: ${_partial.text}'
-                                        : '',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontFamily: 'Futura',
-                                    ),
-                                  ),
-                                  Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
                                         const Text(
-                                          'Confirmation Slip:',
+                                          '(State your study plan credit hours)',
+                                          style: TextStyle(
+                                              color: Colors.black54,
+                                              fontSize: 13,
+                                              fontStyle: FontStyle.italic,
+                                              fontFamily: 'Futura'),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const Divider(
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.grey[100],
+                                          ),
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            underline:
+                                                Container(), // Remove underline
+                                            value: dropdownValueMajor,
+                                            onChanged: (String? value) {
+                                              setState(() {
+                                                dropdownValueMajor = value!;
+                                              });
+                                            },
+                                            items: major
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 5),
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(value),
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            iconSize: 24,
+                                            elevation: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.grey[100],
+                                          ),
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            underline:
+                                                Container(), // Remove underline
+                                            value: dropdownValueAdmission,
+                                            onChanged: (String? value) {
+                                              setState(() {
+                                                dropdownValueAdmission = value!;
+                                              });
+                                            },
+                                            items: addmission
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 5),
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(value),
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            iconSize: 24,
+                                            elevation: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.univ,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'University Required Course',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.rdepart,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'Department Required Course',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.kull,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'Kulliyyah Required Course',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.edepart,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'Department Elective Course',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.ch,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'Credit Hours for Current Semester',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 5),
+
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.totalch,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.school_rounded),
+                                                labelText:
+                                                    'Total Credit Hours Required',
+                                                hintText: "0/0",
+                                              ),
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter the number';
+                                                }
+                                                return null;
+                                              },
+                                            )),
+                                        const SizedBox(height: 20),
+
+                                        //commercement IAP
+                                        const Text(
+                                          'Commercement of Industrial Attachment Programme',
                                           style: TextStyle(
                                               color: Colors.black87,
                                               fontSize: 17,
                                               fontFamily: 'Futura'),
-                                          textAlign: TextAlign.right,
+                                          textAlign: TextAlign.center,
                                         ),
-                                        const SizedBox(width: 10),
-                                        ElevatedButton(
-                                            onPressed: _pickFileConfirm,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      148, 112, 18, 1),
-                                            ),
-                                            child: const Text(
-                                              'Attach File',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontFamily: 'Futura'),
+                                        const Text(
+                                          '(select semester for IAP commercement/start)',
+                                          style: TextStyle(
+                                              color: Colors.black54,
+                                              fontSize: 13,
+                                              fontStyle: FontStyle.italic,
+                                              fontFamily: 'Futura'),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const Divider(
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.grey[100],
+                                          ),
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            underline:
+                                                Container(), // Remove underline
+                                            value: dropdownValueSem,
+                                            onChanged: (String? value) {
+                                              setState(() {
+                                                dropdownValueSem = value!;
+                                              });
+                                            },
+                                            items: sem
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            left: 5),
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(value),
+                                                  ),
+                                                );
+                                              },
+                                            ).toList(),
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            iconSize: 24,
+                                            elevation: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+
+                                        //Attachment
+                                        const Text(
+                                          'Required Attachments',
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 17,
+                                              fontFamily: 'Futura'),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                '(for validation purposes)',
+                                                style: TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 13,
+                                                    fontStyle: FontStyle.italic,
+                                                    fontFamily: 'Futura'),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              SizedBox(
+                                                  child: ElevatedButton(
+                                                      onPressed: () {
+                                                        instruction();
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.black87,
+                                                          side:
+                                                              const BorderSide(
+                                                                  color: Colors
+                                                                      .white70),
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          100))),
+                                                      child: const Text(
+                                                        'Instruction',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 10,
+                                                            fontFamily:
+                                                                'Futura'),
+                                                      )))
+                                            ]),
+                                        const Divider(
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const Text(
+                                                      'Graduation Audit:',
+                                                      style: TextStyle(
+                                                          color: Colors.black87,
+                                                          fontSize: 17,
+                                                          fontFamily: 'Futura'),
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    ElevatedButton(
+                                                        onPressed:
+                                                            pickAndUploadFileGrd,
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              const Color
+                                                                  .fromRGBO(0,
+                                                                  146, 143, 10),
+                                                        ),
+                                                        child: const Text(
+                                                          'Attach File',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontFamily:
+                                                                  'Futura'),
+                                                        )),if (_isUploading1) const CircularProgressIndicator(),
+                                                    const SizedBox(width: 10),
+                                                  ]),
+                                              Text(
+                                                _grd.text.isNotEmpty
+                                                    ? 'Selected File: ${_grd.text}'
+                                                    : '',
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontFamily: 'Futura',
+                                                ),
+                                              ),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const Text(
+                                                      'Partial Transcript:',
+                                                      style: TextStyle(
+                                                          color: Colors.black87,
+                                                          fontSize: 17,
+                                                          fontFamily: 'Futura'),
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    ElevatedButton(
+                                                        onPressed:
+                                                            pickAndUploadFilePartial,
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              const Color
+                                                                  .fromRGBO(0,
+                                                                  146, 143, 10),
+                                                        ),
+                                                        child: const Text(
+                                                          'Attach File',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontFamily:
+                                                                  'Futura'),
+                                                        )),if (_isUploading2) const CircularProgressIndicator(),
+                                                  ]),
+                                              Text(
+                                                _partial.text.isNotEmpty
+                                                    ? 'Selected File: ${_partial.text}'
+                                                    : '',
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontFamily: 'Futura',
+                                                ),
+                                              ),
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const Text(
+                                                      'Confirmation Slip:',
+                                                      style: TextStyle(
+                                                          color: Colors.black87,
+                                                          fontSize: 17,
+                                                          fontFamily: 'Futura'),
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    ElevatedButton(
+                                                        onPressed:
+                                                            pickAndUploadFileCon,
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor:
+                                                              const Color
+                                                                  .fromRGBO(0,
+                                                                  146, 143, 10),
+                                                        ),
+                                                        child: const Text(
+                                                          'Attach File',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontFamily:
+                                                                  'Futura'),
+                                                        )),if (_isUploading3) const CircularProgressIndicator(),
+                                                  ]),
+                                              Text(
+                                                _confirm.text.isNotEmpty
+                                                    ? 'Selected File: ${_confirm.text}'
+                                                    : '',
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontFamily: 'Futura',
+                                                ),
+                                              ),
+                                            ]),
+                                        const SizedBox(height: 20),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            MouseRegion(
+                                              cursor: SystemMouseCursors.click,
+                                              child: Tooltip(
+                                                message:
+                                                    'Submission should be in PDF format',
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        showPDFformat(context);
+                                                      },
+                                                      child: const Icon(
+                                                        Icons.info,
+                                                        size: 30,
+                                                        color: Color.fromRGBO(
+                                                            0, 146, 143, 10),
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                        const SizedBox(height: 20),
+
+                                        //note
+                                        const Text(
+                                          'Note to IAP Coordinator',
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 17,
+                                              fontFamily: 'Futura'),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const Divider(
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Padding(
+                                            padding: const EdgeInsets.all(5),
+                                            child: TextFormField(
+                                              key: UniqueKey(),
+                                              controller: studentData.note,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    borderSide:
+                                                        const BorderSide(
+                                                            width: 0,
+                                                            style: BorderStyle
+                                                                .none)),
+                                                fillColor: Colors.grey[100],
+                                                filled: true,
+                                                prefixIcon: const Icon(
+                                                    Icons.note_alt_rounded),
+                                                labelText:
+                                                    'Note to Coordinator',
+                                                hintText:
+                                                    "write with clear explanation and respectful manner",
+                                              ),
                                             )),
-                                        const SizedBox(width: 10),
-                                        IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(
-                                              Icons.camera_alt_rounded,
-                                              color: Colors.black87),
-                                        )
-                                      ]),
-                                  Text(
-                                    _confirm.text.isNotEmpty
-                                        ? 'Selected File: ${_confirm.text}'
-                                        : '',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontFamily: 'Futura',
-                                    ),
-                                  ),
-                                ]),
-                            const SizedBox(height: 20),
+                                        const SizedBox(height: 5),
 
-                            //note
-                            const Text(
-                              'Note to IAP Coordinator',
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 17,
-                                  fontFamily: 'Futura'),
-                              textAlign: TextAlign.center,
-                            ),
-                            const Divider(
-                              color: Colors.black87,
-                            ),
-                            const SizedBox(height: 5),
-                            Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  onChanged: (value) {
-                                    note.text = value;
-                                  },
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                            width: 0, style: BorderStyle.none)),
-                                    fillColor: Colors.grey[100],
-                                    filled: true,
-                                    prefixIcon:
-                                        const Icon(Icons.note_alt_rounded),
-                                    labelText: 'Note to Coordinator',
-                                    hintText:
-                                        "write with clear explanation and respectful manner",
-                                  ),
-                                )),
-                            const SizedBox(height: 5),
+                                        Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Checkbox(
+                                                checkColor: Colors.white,
+                                                fillColor: MaterialStateProperty
+                                                    .resolveWith(getColor),
+                                                value: isChecked,
+                                                onChanged: (bool? value) {
+                                                  if (_formKey.currentState!
+                                                      .validate()) {
+                                                    setState(() {
+                                                      isChecked = value!;
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                              const SizedBox(width: 10),
+                                              const Expanded(
+                                                  child: Text(
+                                                'I have read and understand the above statements.',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 17,
+                                                    fontFamily: 'Futura'),
+                                                textAlign: TextAlign.start,
+                                              )),
+                                            ]),
 
-                            Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Checkbox(
-                                    checkColor: Colors.white,
-                                    fillColor:
-                                        MaterialStateProperty.resolveWith(
-                                            getColor),
-                                    value: isChecked,
-                                    onChanged: (bool? value) {
-                                      if (_formKey.currentState!.validate()) {
-                                        setState(() {
-                                          isChecked = value!;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Expanded(
-                                      child: Text(
-                                    'I have read and understand the above statements.',
-                                    style: TextStyle(
-                                        color: Colors.black87,
-                                        fontSize: 17,
-                                        fontFamily: 'Futura'),
-                                    textAlign: TextAlign.start,
-                                  )),
-                                ]),
+                                        //SUBMIT BUTTON
+                                        const SizedBox(height: 10),
+                                        Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  User? user = FirebaseAuth
+                                                      .instance.currentUser;
 
-                            //SUBMIT BUTTON
-                            const SizedBox(height: 10),
-                            Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      iapformdb.child('iapData').set({
-                                        'Name': name.text,
-                                        'Matric': matric.text,
-                                        'Phone No': phone.text,
-                                        'Email': email.text,
-                                        'Major': dropdownValueMajor,
-                                        'Admission Type':
-                                            dropdownValueAdmission,
-                                        'Univ Required Course': univ.text,
-                                        'Department Required Course':
-                                            rdepart.text,
-                                        'Kulliyyah Required Course': kull.text,
-                                        'Department Elective Course':
-                                            edepart.text,
-                                        'CH Current Sem': ch.text,
-                                        'Total CH': totalch.text,
-                                        'Semester': dropdownValueSem,
-                                        'Note': note.text
-                                      });
-                                      GoReview();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromRGBO(148, 112, 18, 1),
+                                                  if (user != null) {
+                                                    String userId = user.uid;
+                                                    DatabaseReference userRef =
+                                                        FirebaseDatabase
+                                                            .instance
+                                                            .ref('Student')
+                                                            .child('IAP Form')
+                                                            .child(userId);
+
+                                                    userRef.set({
+                                                      'Name': studentData
+                                                          .iapname.text,
+                                                      'Matric': studentData
+                                                          .matric.text,
+                                                      'Phone No': studentData
+                                                          .contact.text,
+                                                      'Email': email.text,
+                                                      'Major':
+                                                          dropdownValueMajor,
+                                                      'Admission Type':
+                                                          dropdownValueAdmission,
+                                                      'Univ Required Course':
+                                                          studentData.univ.text,
+                                                      'Department Required Course':
+                                                          studentData
+                                                              .rdepart.text,
+                                                      'Kulliyyah Required Course':
+                                                          studentData.kull.text,
+                                                      'Department Elective Course':
+                                                          studentData
+                                                              .edepart.text,
+                                                      'CH Current Sem':
+                                                          studentData.ch.text,
+                                                      'Total CH': studentData
+                                                          .totalch.text,
+                                                      'Semester':
+                                                          dropdownValueSem,
+                                                      'Note':
+                                                          studentData.note.text,
+                                                      'Graduation Audit':
+                                                          selectedFileGrd,
+                                                      'Partial Transcript':
+                                                          selectedFilePartial,
+                                                      'Confirmation Letter':
+                                                          selectedFileCon
+                                                    });
+
+                                                    GoReview();
+                                                  }
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  maximumSize: const Size(
+                                                      double.infinity, 50),
+                                                  backgroundColor:
+                                                      const Color.fromRGBO(
+                                                          0, 146, 143, 10),
+                                                ),
+                                                child: const Text(
+                                                  'Submit',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontFamily: 'Futura',
+                                                  ),
+                                                ),
+                                              ),
+                                            ]),
+                                      ],
                                     ),
-                                    child: const Text(
-                                      'OK',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Futura',
-                                      ),
-                                    ),
-                                  ),
-                                ]),
-                          ],
-                        ),
-                      )))
+                                  ))
+                            ]);
+                      })))
                 ])))));
+  }
+
+  void showPDFformat(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Attention',
+            style: TextStyle(
+              color: Colors.red[800],
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Futura',
+            ),
+          ),
+          content: RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontFamily: 'Futura',
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: 'Submission should be in ',
+                ),
+                TextSpan(
+                  text: 'PDF format ',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Futura',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Futura'),
+                )),
+          ],
+        );
+      },
+    );
   }
 
   void instruction() {
@@ -1077,7 +1316,7 @@ class _IapFormState extends State<IapForm> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(148, 112, 18, 1),
+                      backgroundColor: const Color.fromRGBO(0, 146, 143, 10),
                     ),
                     child: const Text(
                       'Ok',
@@ -1091,79 +1330,149 @@ class _IapFormState extends State<IapForm> {
     );
   }
 
-  
   //STORAGE
-  Future<String?> uploadGrd(String fileName) async { //File files
-  
-    final Reference =
-        FirebaseStorage.instance.ref().child('Graduation Audit/$fileName');
-        
-    //final UploadTask = Reference.putFile(files);
-    //await UploadTask.whenComplete(() {});
-    
-    final downloadLink = await Reference.getDownloadURL();
-    return downloadLink;
-  }
-
-  void _pickFileGrd() async { 
+  Future<void> pickAndUploadFileGrd() async {
     try {
-      final pickedFile = await FilePicker.platform.pickFiles(
+      setState(() {
+      _isUploading1 = true;
+    });
+
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
-      
-      if (pickedFile != null && pickedFile.files.isNotEmpty) {
-        PlatformFile file = pickedFile.files.first;
-        String fileName = pickedFile.files[0].name;
-        //File files = File(pickedFile.files[0].path!); 
-        //final downloadLink = await uploadGrd(fileName);
+      if (result != null && result.files.isNotEmpty) {
+        User? user = FirebaseAuth.instance.currentUser;
 
-        iapformdb.child('iapFile').set({
-          'FileName' : fileName
-        });
+        if (user != null) {
+          String userId = user.uid;
 
-        print('Selected file: ${file.name}');
+          // Upload file to Firebase Storage
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('IAP Form/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            // Retrieve download URL
+            String fileDownloadURL = await storageReference.getDownloadURL();
 
+            // Update selected file name
+            setState(() {
+              _grd.text = fileName;
+              selectedFileGrd = fileDownloadURL;
+              _isUploading1 = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _grd.text = pickedFile.files.first.name;
-        });
+        _isUploading1 = false; // Set loading state to false if picking is canceled
+      });
       }
     } catch (e) {
-      print('Error picking a file: $e');
+      // Handle exceptions
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading1 = false; // Set loading state to false if picking is canceled
+      });
     }
   }
 
-  void _pickFilePartial() async {
+  Future<void> pickAndUploadFilePartial() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-
+      setState(() {
+      _isUploading2 = true;
+    });
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
       if (result != null && result.files.isNotEmpty) {
-        PlatformFile file = result.files.first;
-        print('Selected file: ${file.name}');
+        User? user = FirebaseAuth.instance.currentUser;
 
+        if (user != null) {
+          String userId = user.uid;
+
+          // Upload file to Firebase Storage
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('IAP Form/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            // Retrieve download URL
+            String fileDownloadURL = await storageReference.getDownloadURL();
+
+            // Update selected file name
+            setState(() {
+              _partial.text = fileName;
+              selectedFilePartial = fileDownloadURL;
+              _isUploading2 = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _partial.text = result.files.first.name;
-        });
+        _isUploading2 = false; // Set loading state to false if picking is canceled
+      });
       }
     } catch (e) {
-      print('Error picking a file: $e');
+      // Handle exceptions
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading2 = false; // Set loading state to false if picking is canceled
+      });
     }
   }
 
-  void _pickFileConfirm() async {
+  Future<void> pickAndUploadFileCon() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-
+      setState(() {
+      _isUploading3 = true;
+    });
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
       if (result != null && result.files.isNotEmpty) {
-        PlatformFile file = result.files.first;
-        print('Selected file: ${file.name}');
+        User? user = FirebaseAuth.instance.currentUser;
 
+        if (user != null) {
+          String userId = user.uid;
+
+          // Upload file to Firebase Storage
+          String fileName = result.files.single.name;
+          Reference storageReference = firebase_storage.FirebaseStorage.instance
+              .ref('IAP Form/$userId/$fileName');
+          UploadTask uploadTask =
+              storageReference.putData(result.files.single.bytes!);
+          await uploadTask.whenComplete(() async {
+            // Retrieve download URL
+            String fileDownloadURL = await storageReference.getDownloadURL();
+
+            // Update selected file name
+            setState(() {
+              _confirm.text = fileName;
+              selectedFileCon = fileDownloadURL;
+              _isUploading3 = false;
+            });
+          });
+        }
+      } else {
+        print("File picking canceled");
         setState(() {
-          _confirm.text = result.files.first.name;
-        });
+        _isUploading3 = false; // Set loading state to false if picking is canceled
+      });
       }
     } catch (e) {
-      print('Error picking a file: $e');
+      // Handle exceptions
+      print("Error picking/uploading file: $e");
+      setState(() {
+        _isUploading3 = false; // Set loading state to false if picking is canceled
+      });
     }
   }
 }
