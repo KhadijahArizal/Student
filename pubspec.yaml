@@ -92,8 +92,6 @@ flutter:
   - assets/profile.jpg
   - assets/iium.png
   - assets/google.png
-  - assets/Help/iap_cover_letter.pdf
-  - assets/Help/iap_placement_verification.pdf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
