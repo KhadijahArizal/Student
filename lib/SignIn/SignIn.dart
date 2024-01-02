@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:student/LayerTwo/summary.dart';
 import 'package:student/Service/auth_service.dart';
@@ -49,7 +50,7 @@ class _SignInState extends State<SignIn> {
                 const Text(
                   'I-KICT',
                   style: TextStyle(
-                    color: Color.fromRGBO(148, 112, 18, 1),
+                    color: Color.fromRGBO(0, 146, 143, 10),
                     fontSize: 60,
                     fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.bold,
@@ -75,35 +76,74 @@ class _SignInState extends State<SignIn> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
+                      // SignIn widget
                       onPressed: () async {
                         try {
-                          await authService.handleSignin();
                           setState(() {
                             _isLoading = true;
                           });
-                          await authService.handleSignin();
 
-                          setState(() {
-                            isSignedIn = true;
-                            _isLoading = false;
-                          });
+                          User? user = await authService.handleSignin();
 
-                          if (isSignedIn) {
-                            print('Successfully SignIn');
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const Passphrase(),
-                              ),
-                            );
+                          if (user != null) {
+                            // User successfully signed in
+                            setState(() {
+                              isSignedIn = true;
+                              _isLoading = false;
+                            });
+
+                            if (await authService.isSignInResultValid(user)) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const Passphrase(),
+                                ),
+                              );
+                            } else {
+                              // Handle the case where the sign-in result is not valid
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Google Sign-In failed. Please try again.'),
+                                ),
+                              );
+                            }
+                          } else {
+                            // User canceled sign-in
+                            setState(() {
+                              _isLoading = false;
+                            });
                           }
                         } catch (e) {
+                          // Handle other sign-in errors
                           print('Error signing in: $e');
                           setState(() {
                             _isLoading = false;
                           });
+
+                          // Check if the error message contains information about the popup being closed
+                          if (e.toString().contains('popup_closed')) {
+                            // Handle the case where the Google Sign-In popup is closed by the user
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Google Sign-In popup closed. Please try again.'),
+                              ),
+                            );
+                          } else if (e
+                              .toString()
+                              .contains('your_error_message_or_code')) {
+                            // Handle other sign-in errors
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Sign-in failed. Please try again.'),
+                              ),
+                            );
+                          }
                         }
                       },
+
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.black,
                         backgroundColor: Colors.white,
