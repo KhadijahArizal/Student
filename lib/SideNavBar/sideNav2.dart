@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use, unused_element, must_be_immutable, camel_case_types
 
 import 'package:flutter/material.dart';
 import 'package:student/LayerTwo/Detect%20Status/statusManagament.dart';
@@ -9,23 +9,22 @@ import '../layerOne/coverLetter.dart';
 
 void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false));
 
-bool _isVisible = false;
-String _status = '';
+bool _isVisible = true;
 
 class sideNav2 extends StatelessWidget {
-  final String studentStatus;
-  final StatusManagement _statusManagement;
+  final StatusManagement _statusManagement =
+      StatusManagement();
+      final StatusManagement statusManagement;
 
-  sideNav2({super.key, required this.studentStatus})
-      : _statusManagement = StatusManagement();
+  sideNav2({Key? key,required this.statusManagement});
 
   @override
   Widget build(BuildContext context) {
     final AuthService authService = AuthService();
 
     _statusManagement.statusStream.listen((String status) {
-      _status = status;
       _isVisible = (status == 'Active');
+      print('Status changed: $_isVisible'); // For debugging
     });
 
     return Drawer(
@@ -80,7 +79,7 @@ class sideNav2 extends StatelessWidget {
             ),
             buildMenuItem(
                 text: 'Help',
-                icon: Icons.help_center_rounded,
+                icon: Icons.help_rounded,
                 onClicked: (() => selectedItem(context, 2))),
             const SizedBox(
               height: 15,
