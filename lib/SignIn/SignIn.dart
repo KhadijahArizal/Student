@@ -22,6 +22,14 @@ class _SignInState extends State<SignIn> {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(244, 243, 243, 1),
       appBar: AppBar(
+        title: const Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+            Text(
+              'Student Dashboard',
+              style: TextStyle(
+                  color: Colors.black38, fontSize: 15, fontFamily: 'Futura'),
+              textAlign: TextAlign.right,
+            )
+          ]),
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back_ios_new_rounded,
@@ -69,7 +77,7 @@ class _SignInState extends State<SignIn> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Industrial Attachment Programme Dashboard',
+                  'Industrial Attachment Programme Student Dashboard',
                   style: TextStyle(
                     color: Colors.black87,
                     fontSize: 20,
