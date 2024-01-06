@@ -118,7 +118,7 @@ class _SurveyPageState extends State<SurveyPage> {
                                 ),
                               ),
                               const Text(
-                                'Do you want to edit the survey?',
+                                'Tap outside the dialog box if you want to edit the survey',
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 15,
@@ -137,31 +137,13 @@ class _SurveyPageState extends State<SurveyPage> {
                                       );
                                     },
                                     child: const Text(
-                                      'No',
+                                      'ok',
                                       style: TextStyle(
                                         color: Color.fromRGBO(0, 146, 143, 10),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 5),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => SurveyPage(),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromRGBO(0, 146, 143, 10),
-                                    ),
-                                    child: const Text(
-                                      'Yes',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
                                 ],
                               ),
                             ],
