@@ -59,6 +59,10 @@ class _MonthlyReportState extends State<MonthlyReport> {
   late DatabaseReference _zoneRef;
   late Future<List<ZoneData>> _userZoneFuture;
 
+  //Ex
+  late DatabaseReference _exRef;
+  late Future<List<UserData1>> _userDataFutureSvEx;
+
   int _currentIndex = 1;
   void onTabTapped(int index) {
     setState(() {
@@ -94,6 +98,11 @@ class _MonthlyReportState extends State<MonthlyReport> {
       _zoneRef =
           FirebaseDatabase.instance.ref('Student').child('Company Details');
       _userZoneFuture = _fetchZoneData();
+
+      //Ex
+      _exRef =
+          FirebaseDatabase.instance.ref('Student').child('Assign Examiner');
+      _userDataFutureSvEx = _fetchSvExData();
 
       //Calculate Report length to summary
       _fetchUserData().then((userDataList) {
@@ -231,6 +240,39 @@ class _MonthlyReportState extends State<MonthlyReport> {
     });
   }
 
+  Future<List<UserData1>> _fetchSvExData() async {
+    List<UserData1> userDataList1 = [];
+    try {
+      DataSnapshot exSnapshot =
+          await _exRef.once().then((event) => event.snapshot);
+
+      Map<dynamic, dynamic>? exData =
+          exSnapshot.value as Map<dynamic, dynamic>?;
+
+      if (exData != null) {
+        exData.forEach((key, value) {
+          if (value is Map<dynamic, dynamic> &&
+              exData!.containsKey(key) &&
+              key == userId) {
+            String exName = exData[key]['ExaminerName'] ?? '';
+            String exEmail = exData[key]['ExaminerEmail'] ?? '';
+
+            UserData1 user1 = UserData1(
+              userId: userId,
+              exName: exName,
+              exEmail: exEmail,
+            );
+            userDataList1.add(user1);
+          }
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
+
+    return userDataList1;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -287,40 +329,42 @@ class _MonthlyReportState extends State<MonthlyReport> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Examiner Name',
-                                      style: TextStyle(
-                                          fontSize: 15, color: Colors.black54)),
-                                  _examiner(
-                                      examiner: 'Dr. Salahuddin Bin Jamal'),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Email',
-                                      style: TextStyle(
-                                          fontSize: 15, color: Colors.black54)),
-                                  _email(email: 'salahuddin@live.iium.edu.my'),
-                                ],
-                              ),
-                            ],
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FutureBuilder<List<UserData1>>(
+                              future: _userDataFutureSvEx,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Container();
+                                } else {
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: snapshot.data!.length,
+                                    itemBuilder: (context, index) {
+                                      var userE = snapshot.data![index];
+                                      return Container(
+                                        margin: const EdgeInsets.all(0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _buildDetail(
+                                                'Examiner', userE.exName),
+                                                const SizedBox(height: 10),
+                                                _buildDetail(
+                                                'Email', userE.exEmail),
+                                            const SizedBox(height: 10),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,10 +420,10 @@ class _MonthlyReportState extends State<MonthlyReport> {
                             ConnectionState.waiting) {
                           return const Center(
                               child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color.fromRGBO(0, 146, 143, 10),
-                              ),
-                            ));
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color.fromRGBO(0, 146, 143, 10),
+                            ),
+                          ));
                         } else if (snapshot.hasError) {
                           return Center(
                               child: Text('Error: ${snapshot.error}'));
@@ -620,11 +664,12 @@ class _MonthlyReportState extends State<MonthlyReport> {
           future: _userDataFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color.fromRGBO(0, 146, 143, 10),
-                              ),
-                            ));
+              return const Center(
+                  child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Color.fromRGBO(0, 146, 143, 10),
+                ),
+              ));
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else {
@@ -694,30 +739,21 @@ class _MonthlyReportState extends State<MonthlyReport> {
   }
 }
 
-Widget _examiner({required String examiner}) => Container(
-      alignment: Alignment.topLeft,
-      child: Column(
-        children: [
-          Text(
-            examiner,
-            style: const TextStyle(color: Colors.black87, fontSize: 16),
-          )
-        ],
+Widget _buildDetailE(String label, String value) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(fontSize: 13, color: Colors.black54),
       ),
-    );
-
-Widget _email({required String email}) => Container(
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            email,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
-          ),
-        ],
+      Text(
+        value,
+        style: const TextStyle(fontSize: 15, color: Colors.black87),
       ),
-    );
+    ],
+  );
+}
 
 Widget _buildDetail(String label, String value) {
   return Column(
@@ -832,5 +868,17 @@ class ZoneData {
   ZoneData({
     required this.userId,
     required this.zone,
+  });
+}
+
+class UserData1 {
+  final String userId;
+  final String exName;
+  final String exEmail;
+
+  UserData1({
+    required this.userId,
+    required this.exName,
+    required this.exEmail,
   });
 }
