@@ -88,7 +88,7 @@ class _StartState extends State<Start> {
                   ),
                   const SizedBox(height: 5),
                   const Text(
-                    'Industrial Attachment Programme Dashboard',
+                    'Industrial Attachment Programme Student Dashboard',
                     style: TextStyle(
                       color: Colors.black87,
                       fontSize: 20,
